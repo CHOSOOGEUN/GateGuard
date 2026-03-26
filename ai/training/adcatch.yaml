@@ -1,0 +1,29 @@
+# YOLOv8 데이터셋 설정 파일
+# Roboflow에서 데이터셋 export 후 경로를 아래에 맞게 수정하세요.
+#
+# Roboflow export 형식: YOLOv8 (TXT 어노테이션)
+# 폴더 구조 예시:
+#   dataset/
+#     train/
+#       images/  labels/
+#     val/
+#       images/  labels/
+#     test/
+#       images/  labels/
+
+# 데이터셋 루트 경로 (절대경로 또는 YAML 파일 기준 상대경로)
+path: ../dataset/annotated
+
+train: train/images
+val:   val/images
+test:  test/images
+
+# 클래스 수
+nc: 4
+
+# 클래스 이름 (Roboflow 라벨링 시 동일한 순서로 설정)
+names:
+  0: banner        # 현수막 (가로형/세로형 천 배너)
+  1: flyer         # 전단지 (벽·전봇대에 붙인 종이)
+  2: sticker_card  # 스티커·명함 광고 (접착식 소형 광고)
+  3: legal_ad      # 정상 광고 (지정 게시대·공식 광고판)

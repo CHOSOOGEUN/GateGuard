@@ -20,14 +20,16 @@ def ai_filter_dataset(dataset_dir, noise_dir):
         return
 
     # 2. 모델에게 던져줄 질문 (Zero-shot 분류 레이블)
-    # 0번: 우리가 원하는 실사 사진
-    # 1번: 일러스트/그림 노이즈
-    # 2번: 글자나 간판이 없는 엉뚱한 풍경/사물 위주 사진
+    # 0번: 우리가 원하는 실사 사진 (한국 거리 맥락 명시)
+    # 1번: 일러스트/그림/인포그래픽 노이즈
+    # 2번: 광고물이 없는 엉뚱한 사진
     labels = [
-        "A real photo of a street banner, flyer, sign, or poster in the street",
-        "A cartoon, vector graphic, digital painting, drawing, or illustration",
-        "A photo of a person, animal, interior, or nature landscape without clear signboards or text"
+        "outdoor photo of advertisement signs, banners, stickers or flyers attached to walls, poles or buildings on Korean streets",
+        "illustration, infographic, cartoon, logo, diagram, vector graphic, or digital artwork",
+        "photo of food, people, animals, interior room, or nature without street advertisements"
     ]
+    # label[0]의 확률이 이 값 미만이면 노이즈로 판단 (기존 argmax 방식보다 정밀)
+    VALID_THRESHOLD = 0.50
 
     os.makedirs(noise_dir, exist_ok=True)
     moved_count = 0
@@ -57,15 +59,16 @@ def ai_filter_dataset(dataset_dir, noise_dir):
                 logits_per_image = outputs.logits_per_image
                 probs = logits_per_image.softmax(dim=1).cpu().detach().numpy()[0]
                 
-                # 가장 확률이 높은 레이블의 인덱스 추론 (0, 1, 2)
+                # label[0] 확률이 threshold 이상이면 통과, 미만이면 노이즈
+                valid_prob = probs[0]
                 best_match_idx = probs.argmax()
 
-                if best_match_idx == 0:
+                if valid_prob >= VALID_THRESHOLD:
                     valid_count += 1
-                    # print(f"🟢 [통과] 실사 사진 확인: {file} (확률: {probs[0]*100:.1f}%)")
+                    # print(f"🟢 [통과] 실사 사진 확인: {file} (확률: {valid_prob*100:.1f}%)")
                 else:
                     reason = "일러스트" if best_match_idx == 1 else "무관한 피사체"
-                    print(f"🔴 [차단] 노이즈 감지({reason}): {file} (확률: {probs[best_match_idx]*100:.1f}%)")
+                    print(f"🔴 [차단] 노이즈 감지({reason}): {file} (광고물 확률: {valid_prob*100:.1f}%)")
                     
                     category_folder = os.path.basename(root)
                     target_dir = os.path.join(noise_dir, category_folder)
