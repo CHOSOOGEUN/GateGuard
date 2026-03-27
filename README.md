@@ -100,7 +100,7 @@ docker exec gateguard-backend-1 alembic upgrade head
 - `develop`: 통합 개발 브랜치
 - `feature/담당자-기능명`: 개별 기능 전용 브랜드
 
-> **[현재 상태]** `feature/조수근-backend-complete-v1` 브랜치에서 **Milestone v1.0 통합 PR** 상신 중
+> **[현재 상태]** `feature/조수근-backend-complete-v1` 코드를 `master` 브랜치에 **최종 병합 완료 (Milestone v1.0 정복)** 🏁
 
 ---
 

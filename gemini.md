@@ -97,7 +97,7 @@ Frontend
 ## Gemini에게 전달 사항
 
 - **백엔드 코어 인프라 구축 완료 (2026-03-27)**: JWT 인증, WebSocket 실시간 전송, Alembic 마이그레이션 세팅 포함.
-- **통합 PR 상신 중**: `feature/조수근-backend-complete-v1` 브랜치에 정제된 코드 통합 완료.
+- **통합 완료 (2026-03-27)**: `feature/조수근-backend-complete-v1` 코드를 `master` 브랜치에 최종 병합 완료.
 - **최우선 과제**: AI 모델(inference.py) 결과값의 백엔드 연동 및 S3 영상 클립 실제 업로드 파트 실체화.
 
 ---
