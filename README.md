@@ -121,8 +121,8 @@ GateGuard/
 
 ```bash
 # 저장소 클론
-git clone https://github.com/CHOSOOGEUN/AdCatch.git
-cd AdCatch
+git clone https://github.com/CHOSOOGEUN/GateGuard.git
+cd GateGuard
 
 # 전체 서비스 실행 (백엔드 + DB + Redis)
 docker-compose up -d
