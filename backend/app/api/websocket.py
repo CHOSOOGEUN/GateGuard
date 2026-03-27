@@ -18,12 +18,17 @@ class ConnectionManager:
         self._connections.remove(ws)
 
     async def broadcast(self, data: dict[str, Any]):
+        """
+        [최적화 v1] 모든 활성 클라이언트에게 광속으로 데이터를 방송하고, 끊긴 소켓은 안전하게 정리합니다.
+        """
         message = json.dumps(data, ensure_ascii=False, default=str)
+        # 리스트 복사본을 순회하여 안전한 삭제 보장
         for ws in list(self._connections):
             try:
                 await ws.send_text(message)
-            except Exception:
-                self._connections.remove(ws)
+            except (WebSocketDisconnect, Exception):
+                if ws in self._connections:
+                    self._connections.remove(ws)
 
 
 manager = ConnectionManager()
