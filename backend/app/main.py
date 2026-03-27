@@ -9,8 +9,9 @@ from app.database import Base, engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # [통합 v1] 이제 Alembic을 사용하므로, 서버 시작 시 자동 생성은 하지 않습니다.
+    # async with engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.create_all)
     yield
 
 

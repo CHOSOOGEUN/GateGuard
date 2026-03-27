@@ -29,16 +29,16 @@
 
 ## 팀 구성
 
-| 이름 | 학과 | 역할 |
+| 이름 | 역할 | 담당 파트 |
 |------|------|------|
-| **조수근** | 컴퓨터공학과 | 백엔드 팀장 · AI 보조 |
-| **김민지** | 컴퓨터공학과 | 팀 팀장 · DB |
-| 이동근 | 컴퓨터공학과 | 인프라 · 서버 |
-| 최태양 | 컴퓨터공학과 | 인프라 · 서버 |
-| **이지현** | 컴퓨터공학과 | 프론트엔드 팀장 |
-| 김유진 | 컴퓨터공학과 | 프론트엔드 |
-| 양은혜 | 컴퓨터공학과 | 프론트엔드 |
-| 윤효정 | 인공지능전공 | AI |
+| **조수근** | **백엔드 팀장** | **코어 인프라 · 보안 · 실시간 시스템 · AI 보조** |
+| **김민지** | **프로젝트 팀장** | **DB 설계 · 마이그레이션 · 협업 관리** |
+| **이동근** | 인프라 | 서버 구축 · CI/CD |
+| **최태양** | 인프라 | 클라우드 인프라 |
+| **이지현** | **프론트팀장** | **대시보드 UI/UX 설계** |
+| **김유진** | 프론트엔드 | 클라이언트 통계 |
+| **양은혜** | 프론트엔드 | 모바일 앱 |
+| **윤효정** | AI | 탐지 모델 구축 |
 
 ---
 
@@ -46,16 +46,17 @@
 
 ### 관리자 웹 (React.js)
 - 역무원/관제 담당자용 PC 대시보드
-- 실시간 CCTV 영상 스트림 + 무임승차 감지 알림
+- 실시간 CCTV 영상 스트림 + 무임승차 감지 알림 (**WebSocket 연동**)
 - 이벤트 영상 클립 저장 및 조회
 - 역별 통계 현황
 
-### 백엔드 (FastAPI)
-- CCTV 영상 수신 및 AI 추론 처리
-- 실시간 알림 (WebSocket)
+### 백엔드 (FastAPI) — Milestone v1.0 완료
+- CCTV 영상 수신 및 AI 추론 결과 기록
+- **실시간 알림 브로드캐스트 (WebSocket)**
+- **보안 레이어 (JWT / RBAC)**
 - 비동기 처리: Celery + Redis
 
-### 역무원 알림 앱 (React Native) — 
+### 역무원 알림 앱 (React Native)
 - 무임승차 감지 시 모바일 푸시 알림
 
 ---
@@ -64,114 +65,53 @@
 
 ```
 AI / ML
-- PyTorch
-- YOLOv11 (Ultralytics) — 최신 객체 탐지 모델 (YOLOv8 기반 업그레이드)
-- ByteTrack (ECCV 2022) — 다중 객체 ID 추적
-- Supervision (Roboflow) — 고수준 CV 라이브러리 (시각화, 존 카운팅, 라인 크로싱)
-- OpenCV — 영상 전처리 및 비식별화(얼굴 블러)
-- 학습 환경: Google Colab Pro
+- PyTorch / YOLOv11 (Ultralytics)
+- ByteTrack (다중 객체 ID 추적)
+- Supervision (CV 파이프라인 시각화 및 감지 로직)
+- OpenCV (비식별화 처리)
 
-Backend
-- Python 3.11 / FastAPI
-- Celery + Redis (비동기 큐)
-- PostgreSQL + TimescaleDB (시계열 데이터 최적화)
-- AWS S3 (영상 클립 저장)
-- JWT 인증 및 WebSocket (실시간 알림)
+Backend (v1.0)
+- Python 3.11 / FastAPI (비동기 엔진)
+- Alembic (DB 마이그레이션 관리)
+- JWT (OAuth2 기반 보안 인증)
+- WebSocket (실시간 알림 브로드캐스트)
+- PostgreSQL + TimescaleDB (시계열 최적화 DB)
+- Celery + Redis (비동기 태스크 큐)
 
 Frontend
-- React.js + Tailwind CSS + Shadcn UI (현대적이고 프리미엄한 UI 구성)
-- React Native (역무원용 모바일 푸시 알림 앱)
-- Apache ECharts (데이터 시각화 및 통계 히트맵)
-
-Infra
-- Docker + Docker Compose
-- AWS EC2 + Nginx + SSL (Let's Encrypt)
-- GitHub Actions (CI/CD)
+- React.js + Tailwind CSS + Shadcn UI
+- Apache ECharts (통계 시각화)
 ```
 
 ---
 
-## AI 파이프라인
+## DB 구조 (v1.0 정식)
 
-```
-CCTV 영상 입력 (실시간 스트림)
-    ↓
-비식별화 (Edge/Server) — YOLO를 이용한 얼굴 감지 및 즉시 블러 처리
-    ↓
-YOLOv11 — 프레임별 사람 감지 및 바운딩 박스 생성
-    ↓
-Supervision + ByteTrack — 다중 사람 ID 추적 및 이동 경로 분석
-    ↓
-Line Crossing / Zone 감지 — 개찰구 경계 통과 + 게이트 상태 실시간 판단
-    ↓
-무임승차 판정 — 게이트 열림 없이 경계 통과 시 즉시 이벤트 발생
-    ↓
-관리자 대시보드 — Shadcn UI 기반 실시간 알림 + S3 영상 클립 저장
-```
-
----
-
-## 향후 고도화 계획 (개선 방안)
-
-1.  **동작 분석 기능:** 단순 추적을 넘어 '점프', '숙이기' 등 무임승차 특유의 동작을 인식하는 Action Recognition 모델 연동.
-2.  **엣지 컴퓨팅 도입:** 추후 실서비스 시 대역폭 절감을 위해 NVIDIA Jetson 등 엣지 디바이스에서 1차 분석을 수행하는 아키텍처 도입 검토.
-3.  **통계 대시보드 강화:** Apache ECharts를 활용해 시간대별/개찰구별 무임승차 취약 지점 히트맵 제공.
-
----
-
-## 학습 데이터 계획
-
-- **AI Hub 교통 CCTV 데이터셋** (보행자 포함, 570,000장+, Tracking 포함)
-  - https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=165
-- **MOT17 / MOT20** 다중 객체 추적 벤치마크
-  - https://motchallenge.net/
-- **시뮬레이션 영상 직접 촬영** — 학교 출입구 등 유사 환경 재현
-
----
-
-## DB 테이블 (초안)
-
-- `events` — id, camera_id, timestamp, clip_url, track_id, confidence, status
-- `cameras` — id, location, station_name, is_active
-- `admins` — id, email, password, created_at
-- `notifications` — id, event_id, sent_at, read_at
-
----
-
-## 참고 자료
-
-| 항목 | URL |
-|------|-----|
-| Supervision 라이브러리 | https://github.com/roboflow/supervision |
-| Shadcn UI Components | https://ui.shadcn.com/ |
-| ByteTrack 논문 (ECCV 2022) | https://arxiv.org/abs/2110.06864 |
-| AI Hub 교통 CCTV 데이터셋 | https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=165 |
-| MOTChallenge 벤치마크 | https://motchallenge.net/ |
-| 서울 지하철 무임승차 손실 (2024) | https://www.sedaily.com/NewsView/2GNWOJFF0H |
+- `admins`: 관리자 계정 정보 (Hashed PW)
+- `cameras`: 개찰구 카메라 위치 및 상태 관리
+- `events`: 무임승차 감지 기록 (Timestamp, Clip URL 포함)
+- `notifications`: 실시간 알림 이력 및 읽음 상태
 
 ---
 
 ## Gemini에게 전달 사항
 
-- 코드 작업(구현, 디버깅, git)은 **Antigravity와 agent**에서 진행
-- 문서, PDF, 회의 자료 작업은 **Gemini와 notebookLM**에서 진행
-- 기술 스택은 담당자 재량으로 변경 가능
-- GitHub 레포명: GateGuard (https://github.com/CHOSOOGEUN/GateGuard)
-- 브랜치 전략: `feature/담당자-기능명` (GitHub Flow)
-- README.md 생성 완료 (2026-03-27)
-- **백엔드 인프라 구축 완료** (2026-03-27): FastAPI, TimescaleDB, Redis, Celery (Docker 기반)
-- **로컬 개발 환경 최적화**: macOS 보안 문제 해결을 위해 프로젝트를 `/Users/josugeun/Desktop/GateGuard` 로 이동하여 Docker 구동 확인
+- **백엔드 코어 인프라 구축 완료 (2026-03-27)**: JWT 인증, WebSocket 실시간 전송, Alembic 마이그레이션 세팅 포함.
+- **통합 PR 상신 중**: `feature/조수근-backend-complete-v1` 브랜치에 정제된 코드 통합 완료.
+- **최우선 과제**: AI 모델(inference.py) 결과값의 백엔드 연동 및 S3 영상 클립 실제 업로드 파트 실체화.
 
 ---
 
-## 현재 개발 상태 (2026-03-27)
+## 현재 개발 상태 (2026-03-27 기준)
 
 | 컴포넌트 | 상태 | 비고 |
 |---|---|---|
-| **백엔드 API** | ✅ 구동 중 | `http://localhost:8000/docs` 접속 가능 |
-| **데이터베이스** | ✅ 연결 완료 | TimescaleDB (PostgreSQL 16) |
-| **비동기 작업** | ✅ 구동 중 | Celery + Redis |
-| **인증 시스템** | 🚧 구현 중 | JWT 뼈대 작업 완료 |
-| **AI 파이프라인** | 🚧 설계 완료 | `inference.py` 초안 작성됨 |
+| **백엔드 인프라** | ✅ **Milestone v1.0 완료** | FastAPI + 인증 + 실시간 + DB 관리 통합 |
+| **인증 시스템** | ✅ **구현 완료** | JWT 기반 RBAC 적용 |
+| **실시간 알림** | ✅ **구현 완료** | WebSocket Broadcast 엔진 구축 |
+| **DB 마이그레이션** | ✅ **정립 완료** | Alembic 초기 버전(v1) 및 stamp 완료 |
+| **데이터베이스** | ✅ **연결 완료** | TimescaleDB (PostgreSQL 16) |
+| **비중기 작업** | ✅ **구동 중** | Celery + Redis 연동 확인 |
+| **AI 파이프라인** | 🚧 설계 진행 중 | `inference.py` 데이터 연동 대기 |
 
 ---
