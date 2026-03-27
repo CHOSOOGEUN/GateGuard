@@ -1,38 +1,82 @@
-# 🚨 AdCatch - 불법 광고물 탐지 신고 시스템
+# 🛡️ GateGuard
 
-> **경기대학교 AI컴퓨터공학부 캡스톤디자인 2026**
->
-> 스마트폰으로 불법 광고물(전봇대, 버스정류장, 건물 외벽 스티커 등)을 찍으면
-> AI가 자동으로 탐지·분류하고, 지도 시각화 및 관할 지청에 데이터셋을 전달합니다.
-> 신고 시 지역화폐 포인트 지급 (앱테크 방식)
+> **지하철 개찰구 무임승차 자동 감지 시스템**  
+> 경기대학교 AI컴퓨터공학부 캡스톤디자인 2026
 
 ---
 
-## 📋 프로젝트 개요
+## 📌 프로젝트 소개
 
-| 항목 | 내용 |
+지하철 무임승차는 2024년 기준 연간 **4,135억 원**의 손실을 유발하는 사회적 문제입니다.  
+GateGuard는 기존 역무원의 육안 감시를 대체하여, **CCTV 영상을 AI가 실시간 분석**하고 무임승차(뒤따라 들어오기, 점프, 비상문 이용 등)를 자동 감지해 즉시 알림을 보내는 시스템입니다.
+
+---
+
+## 🏗️ 시스템 구조
+
+```
+CCTV 영상 입력 (실시간 스트림)
+    ↓
+비식별화 (Edge/Server) — 얼굴 감지 및 즉시 블러 처리
+    ↓
+YOLOv11 — 프레임별 사람 감지 및 바운딩 박스 생성
+    ↓
+Supervision + ByteTrack — 다중 사람 ID 추적 및 이동 경로 분석
+    ↓
+Line Crossing / Zone 감지 — 개찰구 경계 통과 + 게이트 상태 실시간 판단
+    ↓
+무임승차 판정 — 게이트 열림 없이 경계 통과 시 즉시 이벤트 발생
+    ↓
+관리자 대시보드 — 실시간 알림 + S3 영상 클립 저장
+```
+
+---
+
+## 🔧 기술 스택
+
+### AI / ML
+| 기술 | 역할 |
 |------|------|
-| **프로젝트명** | AdCatch (애드캐치) |
-| **소속** | 경기대학교 AI컴퓨터공학부 캡스톤디자인 |
-| **개발 기간** | 2026년 3월 ~ 6월 |
-| **최종 발표** | 2026년 6월 13일 (경진대회) |
+| PyTorch | 모델 학습 프레임워크 |
+| YOLOv11 (Ultralytics) | 실시간 사람 감지 |
+| ByteTrack (ECCV 2022) | 다중 객체 ID 추적 |
+| Supervision (Roboflow) | 존 카운팅, 라인 크로싱 감지 |
+| OpenCV | 영상 전처리 및 얼굴 비식별화 |
 
-### 주요 기능
-- 📸 **스마트폰 사진 촬영** → 가이드라인 UI로 광고물 촬영
-- 🤖 **AI 자동 탐지·분류** → YOLOv8 매체 분류 (현수막/전단지/스티커/명함/기타)
-- 📍 **지도 시각화** → GPS 위치 기반 신고 현황 지도 표시
-- 💰 **포인트 지급** → 신고 기본 30P + 확정 시 추가 70P + 완료 보너스 20P
+### Backend
+| 기술 | 역할 |
+|------|------|
+| Python 3.11 / FastAPI | REST API 서버 |
+| Celery + Redis | 비동기 작업 큐 |
+| PostgreSQL + TimescaleDB | 시계열 이벤트 데이터 저장 |
+| AWS S3 | 무임승차 영상 클립 저장 |
+| WebSocket | 실시간 감지 알림 |
+| JWT | 인증 |
+
+### Frontend
+| 기술 | 역할 |
+|------|------|
+| React.js + Tailwind CSS + Shadcn UI | 관리자 웹 대시보드 |
+| React Native | 역무원용 모바일 푸시 알림 앱 |
+| Apache ECharts | 통계 및 히트맵 시각화 |
+
+### Infra
+| 기술 | 역할 |
+|------|------|
+| Docker + Docker Compose | 컨테이너 기반 개발/배포 |
+| AWS EC2 + Nginx + SSL | 프로덕션 서버 운영 |
+| GitHub Actions | CI/CD 자동화 |
 
 ---
 
-## 👥 팀 구성
+## 👥 팀원 구성
 
 | 이름 | 학과 | 역할 |
 |------|------|------|
 | **조수근** | 컴퓨터공학과 | 백엔드 팀장 · AI 보조 |
-| **김민지** | 컴퓨터공학과 | 팀 팀장 · DB (백엔드) |
-| 이동근 | 컴퓨터공학과 | 서버, 인프라 (백엔드) |
-| 최태양 | 컴퓨터공학과 | 서버, 인프라 (백엔드) |
+| **김민지** | 컴퓨터공학과 | 팀 팀장 · DB |
+| 이동근 | 컴퓨터공학과 | 인프라 · 서버 |
+| 최태양 | 컴퓨터공학과 | 인프라 · 서버 |
 | **이지현** | 컴퓨터공학과 | 프론트엔드 팀장 |
 | 김유진 | 컴퓨터공학과 | 프론트엔드 |
 | 양은혜 | 컴퓨터공학과 | 프론트엔드 |
@@ -40,289 +84,99 @@
 
 ---
 
-## 🏗️ 서비스 구조
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      사용자 / 관리자                          │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-        ┌────────────────┼────────────────┐
-        │                                 │
-    ┌───▼────────┐               ┌────────▼────────┐
-    │  사용자 앱  │               │   관리자 웹      │
-    │(React      │               │(React.js)        │
-    │ Native)    │               │                  │
-    └───┬────────┘               └────────┬─────────┘
-        │                                 │
-        └─────────────────────────────────┘
-                         │
-                ┌────────▼────────┐
-                │  FastAPI 서버    │
-                │  (Python 3.11)  │
-                └────────┬────────┘
-                         │
-        ┌────────────────┼────────────────┐
-        │                │                │
-    ┌───▼────┐      ┌────▼────┐      ┌────▼────┐
-    │  DB    │      │ Redis/  │      │스토리지  │
-    │(RDBMS) │      │ Celery  │      │(AWS S3) │
-    └────────┘      └─────────┘      └─────────┘
-```
-
-### 1️⃣ 사용자 앱 (React Native)
-- **플랫폼**: iOS + Android 동시 배포
-- **기능**: 촬영 → AI 판별 결과 확인 → 포인트 수령 → 랭킹
-- **사용자 플로우**: 단순하게 "찍기 + 포인트 받기"만
-
-### 2️⃣ 관리자 웹 (React.js + Tailwind CSS)
-- **대상**: 지자체 담당자 (PC 웹 대시보드)
-- **기능**: 지도 시각화 (네이버맵 API), 분류 통계 (Chart.js), AI 결과 검수, 처리 현황 추적
-
-### 3️⃣ 백엔드 서버 (FastAPI)
-- **역할**: 사용자 앱 + 관리자 웹 공통 API 서버
-- **AI 처리**: 서버 측 추론 (엣지 컴퓨팅 아님)
-- **비동기 처리**: Celery + Redis
-
----
-
-## 🛠️ 기술 스택
-
-> 각 파트 담당자의 판단 하에 가장 효율적인 기술로 자유롭게 선택하여 진행.
-
-### AI / ML
-```
-- PyTorch
-- YOLOv8 (Ultralytics)   — 매체 탐지 (1단계, Bounding Box 반환)
-- EfficientNet-B0         — 불법 여부 분류 (M1 이후 보류)
-- OpenCV                  — 전처리 + 얼굴 블러
-- 학습 환경: Google Colab Pro
-```
-
-### Backend
-```
-- Python 3.11 / FastAPI  — 웹 프레임워크 (담당자 재량 변경 가능)
-- Celery + Redis          — 비동기 작업 큐
-- PostgreSQL              — 관계형 DB
-- ORM + 마이그레이션 툴   — 담당자 선택
-- AWS S3 (등)             — 이미지 저장
-- SMS 인증 (네이버 SENS 등)
-- JWT                     — 토큰 인증
-- 이미지 크롭 로직        — AI Bounding Box 기반, 백엔드에서 처리
-```
-
-### Frontend
-```
-- React Native            — 사용자 앱 (iOS/Android)
-- React.js + Tailwind CSS — 관리자 웹
-- 네이버맵 API             — 지도 시각화
-- Chart.js                — 통계 차트
-- 촬영 가이드라인 UI      — 반투명 사각형 오버레이
-```
-
-### Infrastructure
-```
-- Docker + Docker Compose — 컨테이너화
-- AWS EC2 + Nginx + SSL   — 호스팅 (Let's Encrypt)
-- GitHub Actions          — CI/CD 파이프라인
-```
-
----
-
-## 🤖 AI 파이프라인
-
-```
-📸 앱 촬영 (원본 이미지 전송, 가이드라인 UI만 표시)
-    ↓
-📡 백엔드 수신
-    ↓
-🔍 YOLOv8 — 매체 탐지 (바운딩박스 + 분류값 반환)
-    (현수막 / 전단지 / 스티커 / 명함 / 기타)
-    ↓
-✂️  백엔드 — Bounding Box 기반 이미지 크롭 후 스토리지 저장
-    ↓
-✅ 결과 반환 (매체 분류값 + 좌표)
-
-── M1 이후 추가 예정 ──────────────────────────
-📊 EfficientNet-B0 — 불법 여부 분류 (보류)
-    (불법금융 / 불법도박 / 성인광고 / 기타불법 / 정상)
-```
-
----
-
-## 💰 포인트 시스템
-
-| 시점 | 지급 포인트 | 설명 |
-|------|-----------|------|
-| 신고 접수 시 | 기본 30P | 사진 업로드 시 즉시 지급 |
-| 불법 확정 시 | 추가 70P | 관리자 검수 후 확정 |
-| 민원 처리 완료 시 | 보너스 20P | 처리 완료 |
-| **합계** | **최대 120P** | 신고당 최대 120포인트 |
-
-- 관리자가 AI 결과 검수 후 최종 확정
-- 초반엔 AI + 사람 검수 병행, 모델 고도화 후 자동화
-- 포인트는 지역화폐 바우처·할인권으로만 사용 가능 (현금화 금지)
-
----
-
-## 🎯 탐지 카테고리
-
-### 1단계: 매체 분류 (YOLOv8) — M1 집중
-
-| 클래스 | 설명 |
-|--------|------|
-| 현수막 | 건물 외벽, 도로변 현수막 |
-| 전단지 | 길거리 배포 전단지 |
-| 스티커 | 전봇대, 버스정류장 스티커 |
-| 명함 | 불법 명함류 |
-| 기타 | 위 분류에 속하지 않는 광고물 |
-
-### 2단계: 불법 여부 분류 (EfficientNet) — M1 이후 보류
-> 1단계 모델 안정화 후 추가 진행 예정
-
----
-
-## 📬 민원 처리 흐름
-
-```
-┌──────────┐
-│ 사용자 앱 │  ← 찍기 + 포인트 수령 (끝!)
-└────┬─────┘
-     │
-     ▼
-┌──────────────────────────────────────┐
-│       백엔드 / 관리자 대시보드         │
-├──────────────────────────────────────┤
-│ 1. AI 자동 판별                       │
-│    ↓                                  │
-│ 2. 관리자 검수 및 확정                │
-│    ↓                                  │
-│ 3. 관할 지청 데이터셋 전달            │
-│    ↓                                  │
-│ 4. 처리 현황 추적 및 완료             │
-└──────────────────────────────────────┘
-```
-
----
-
-## 🗄️ 데이터베이스 스키마 (초안)
-
-- `users` — id, phone_number, nickname, point_balance, created_at
-- `phone_verifications` — id, phone_number, code, expires_at, is_verified
-- `reports` — id, user_id, image_url, gps_lat, gps_lng, ai_result, confidence, category, status, created_at
-- `points` — id, user_id, amount, type, description, created_at
-- `admins` — id, email, password, created_at
-
----
-
-## 📅 개발 일정 (마일스톤)
-
-| 마일스톤 | 기간 | 목표 |
-|---------|------|------|
-| **M1** | ~3월 30일 | 환경 세팅 · 데이터 수집 |
-| **M2** | ~4월 6일 | 라벨링 완료 · 논문 초록 |
-| **M3** | ~4월 17일 | 모델 첫 학습 · API 기본 완성 |
-| **M4** | ~5월 1일 | 앱 · AI 연동 완성 |
-| **M5** | ~6월 4일 | 전체 완성 · 최종 보고서 |
-| **M6** | ~6월 13일 | 🎬 데모 · 경진대회 발표 |
-
-### M1 체크리스트
-- [x] 프로젝트 방향 확정
-- [x] 기술 스택 확정
-- [x] GitHub 레포 생성
-- [x] README 작성
-- [x] 폴더 구조 세팅
-- [x] TEAM_FAQ.md / CLAUDE.md 작성
-- [x] M1 팀 전체 회의 완료 (2026.03.26)
-- [ ] 백엔드 기본 구조 세팅
-- [ ] DB 스키마 확정 및 구현
-- [ ] Docker Compose + CI/CD 설정
-- [ ] EC2 + Nginx + SSL 인프라 구성
-- [ ] 데이터 수집 (100장+)
-- [ ] Roboflow 세팅 및 라벨링
-- [ ] 프론트엔드 프로젝트 초기화
-
----
-
-## 🚀 빠른 시작 (Quick Start)
-
-### 백엔드
-
-```bash
-# 1. 저장소 클론
-git clone <repository-url>
-cd AdCatch/backend
-
-# 2. 파이썬 가상환경 생성
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. 의존성 설치
-pip install -r requirements.txt
-
-# 4. 환경 변수 설정
-cp .env.example .env
-# .env 파일 수정 (DB 연결, AWS S3, SMS 인증 등)
-
-# 5. 개발 서버 실행
-uvicorn app.main:app --reload
-# API 문서: http://localhost:8000/docs
-```
-
-### Docker Compose (전체 서비스)
-
-```bash
-cd AdCatch/backend
-docker-compose up -d
-```
-
----
-
 ## 📁 프로젝트 구조
 
 ```
-AdCatch/
-├── backend/                    # FastAPI 백엔드
+GateGuard/
+├── backend/            # FastAPI 서버
 │   ├── app/
-│   │   ├── main.py             # 진입점
-│   │   ├── config.py           # 설정
-│   │   ├── database.py         # DB 연결
-│   │   ├── api/                # API 엔드포인트
-│   │   │   ├── auth.py
-│   │   │   ├── reports.py
-│   │   │   ├── points.py
-│   │   │   └── admin.py
-│   │   ├── schemas/            # Pydantic 스키마
-│   │   ├── services/           # 비즈니스 로직
-│   │   └── ai/                 # AI 파이프라인
-│   ├── tests/
-│   ├── requirements.txt
+│   │   ├── api/        # REST API 엔드포인트
+│   │   ├── models/     # DB 모델 (SQLAlchemy)
+│   │   ├── schemas/    # Pydantic 스키마
+│   │   └── workers/    # Celery 비동기 작업
 │   ├── Dockerfile
-│   └── docker-compose.yml
-│
-├── app/                        # React Native 사용자 앱
-├── admin/                      # React.js 관리자 웹
-├── README.md
-├── CLAUDE.md                   # 프로젝트 컨텍스트 (팀원용)
-└── TEAM_FAQ.md                 # 팀 협업 가이드
+│   └── requirements.txt
+├── ai/                 # AI 추론 파이프라인
+│   ├── inference.py    # YOLOv11 + Supervision 추론 로직
+│   ├── tracker.py      # ByteTrack 추적 로직
+│   └── anonymizer.py   # 얼굴 비식별화
+├── frontend/           # React.js 대시보드
+│   ├── src/
+│   └── package.json
+├── mobile/             # React Native 역무원 앱
+├── docker-compose.yml
+└── README.md
 ```
 
 ---
 
-## 🔒 법적 고려사항
+## 🚀 개발 환경 실행
 
-- ✅ **위치정보 수집**: 사용자 동의 필수 (앱 권한 요청)
-- ✅ **민원 최종 제출**: 관리자가 직접 수행
-- ✅ **지역화폐 연동**: 지자체 공식 협약 필요
-- ✅ **크롤링**: robots.txt 준수
-- ✅ **포인트 정책**: 현금화 금지, 바우처·할인권만 가능
+### 사전 준비
+- Docker Desktop 설치 및 실행
+- Python 3.11+
+- Node.js 20+
+
+### 실행 방법
+
+```bash
+# 저장소 클론
+git clone https://github.com/CHOSOOGEUN/AdCatch.git
+cd AdCatch
+
+# 전체 서비스 실행 (백엔드 + DB + Redis)
+docker-compose up -d
+
+# 프론트엔드 개발 서버 실행
+cd frontend && npm install && npm run dev
+```
 
 ---
 
-## 📞 연락처
+## 🌐 DB 구조 (초안)
 
-**백엔드 팀장**: 조수근 (josoogen6017@gmail.com)
+```sql
+events       -- id, camera_id, timestamp, clip_url, track_id, confidence, status
+cameras      -- id, location, station_name, is_active
+admins       -- id, email, password, created_at
+notifications -- id, event_id, sent_at, read_at
+```
 
 ---
 
-**마지막 업데이트**: 2026년 3월 26일
+## 🔀 브랜치 전략
+
+```
+main            ← 배포용 (직접 push 금지)
+├── develop     ← 통합 브랜치
+│   ├── feature/조수근-backend-api
+│   ├── feature/이지현-dashboard-ui
+│   └── feature/윤효정-yolo-pipeline
+```
+
+> **GitHub Flow** 기반: `feature/담당자-기능명` → PR → 코드 리뷰 → merge
+
+---
+
+## 📚 향후 고도화 계획
+
+1. **동작 분석 (Action Recognition):** 점프, 숙이기 등 무임승차 특유 동작 인식 모델 연동
+2. **엣지 컴퓨팅:** NVIDIA Jetson 등 엣지 디바이스에서 1차 분석 수행
+3. **통계 대시보드 강화:** 시간대별/개찰구별 무임승차 취약 지점 히트맵 제공
+
+---
+
+## 📌 참고 자료
+
+| 항목 | URL |
+|------|-----|
+| Supervision 라이브러리 | https://github.com/roboflow/supervision |
+| Shadcn UI | https://ui.shadcn.com/ |
+| ByteTrack 논문 (ECCV 2022) | https://arxiv.org/abs/2110.06864 |
+| AI Hub 교통 CCTV 데이터셋 | https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=165 |
+| MOTChallenge 벤치마크 | https://motchallenge.net/ |
+| 서울 지하철 무임승차 손실 (2024) | https://www.sedaily.com/NewsView/2GNWOJFF0H |
+
+---
+
+> © 2026 GateGuard Team — 경기대학교 AI컴퓨터공학부 캡스톤디자인

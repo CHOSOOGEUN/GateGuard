@@ -1,8 +1,0 @@
-bing-image-downloader==1.1.2
-Pillow==11.1.0
-torch==2.6.0
-vision==1.0.0
-transformers==4.40.1
-imagehash==4.3.1        # deduplicate_images.py: pHash 중복 제거
-beautifulsoup4==4.12.3  # crawl_news_images.py: 뉴스 기사 파싱
-requests==2.32.3        # crawl_news_images.py: HTTP 요청
