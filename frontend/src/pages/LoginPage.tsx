@@ -6,9 +6,6 @@
  * @file LoginPage.tsx
  * @description 관리자 로그인 페이지
  *
- * [담당] 이지현 (frontend)
- * [브랜치] feature/이지현-dashboard-ui
- *
  * ## 주요 기능
  * - POST /api/auth/login 으로 email + password 전송
  * - 응답받은 access_token을 localStorage 또는 sessionStorage에 저장
@@ -18,8 +15,8 @@
  * - 토큰은 axios.ts의 interceptor가 자동으로 헤더에 주입
  *
  * ## 다음 연결 작업 (feature/이지현-dashboard-ui)
- * - [ ] JWT 만료 시 자동 로그아웃 처리 (axios.ts interceptor에서 처리)
- * - [ ] 대시보드 레이아웃 구성 (DashboardPage.tsx)
+ * - [x] JWT 만료 시 자동 로그아웃 처리 (axios.ts interceptor에서 처리)
+ * - [x] 대시보드 레이아웃 구성 (DashboardPage.tsx)
  * - [ ] WebSocket 연결 (ws://localhost:8000/ws/events)
  * - [ ] ECharts 통계 시각화
  */
