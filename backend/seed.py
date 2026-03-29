@@ -1,9 +1,4 @@
 """
-GateGuard 초기 데이터 시딩 스크립트
-- 관리자 계정 생성
-- 테스트 카메라 데이터 삽입
-
-사용법:
   docker compose exec backend python seed.py
 """
 
@@ -23,7 +18,7 @@ ADMIN_ACCOUNTS = [
     {"email": "station01@gateguard.com", "password": "station1234"},
 ]
 
-# 신분당선 (광교역부터 3개 역, 각 2대씩)
+# 신분당선
 _SHINBUNDANG_STATIONS = [
     "광교역", "광교중앙역", "상현역",
 ]
@@ -70,9 +65,9 @@ async def seed():
             print(f"  [ADD]  카메라 생성: {cam['station_name']} - {cam['location']}")
 
         await session.commit()
-        print("\n✅ 시딩 완료!")
+        print("\n 시딩 완료")
 
 
 if __name__ == "__main__":
-    print("🌱 GateGuard 초기 데이터 시딩 시작...\n")
+    print("GateGuard 초기 데이터 시딩 시작...\n")
     asyncio.run(seed())
