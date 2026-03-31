@@ -92,7 +92,7 @@ class FareEvasionDetector:
 
     def run(self, source: int | str = 0):
         """실시간 스트림 실행 (source: 카메라 인덱스 또는 RTSP URL)"""
-        cap = cv2.VideoCapture(source)
+        cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
