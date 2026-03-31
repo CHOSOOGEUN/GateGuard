@@ -15,6 +15,7 @@ docker compose exec backend alembic upgrade head
 ```
 
 ### 마이그레이션 내역
+
 | 리비전 | 설명 |
 |--------|------|
 | `a4437e459dcf` | 초기 테이블 생성 (admins, cameras, events, notifications) |
@@ -23,18 +24,20 @@ docker compose exec backend alembic upgrade head
 ## 3. 시드 데이터 삽입
 
 ```bash
-docker compose exec backend python seed.py
+docker compose exec backend python scripts/db_baseline_seed.py
 ```
 
 ### 생성되는 계정
+
 | 이메일 | 비밀번호 | 용도 |
 |--------|----------|------|
 | `admin@gateguard.com` | `admin1234` | 메인 관리자 |
 | `station01@gateguard.com` | `station1234` | 역무원 테스트 |
 
 ### 생성되는 카메라
+
 | 역명 | 위치 | 상태 |
-|------|------|------|
+| :--- | :--- | :--- |
 | 광교역 | 개찰구 1번 게이트 | 활성 |
 | 광교역 | 개찰구 2번 게이트 | 활성 |
 | 광교중앙역 | 개찰구 1번 게이트 | 활성 |
@@ -46,27 +49,34 @@ docker compose exec backend python seed.py
 브라우저에서 `http://localhost:8000/docs` 접속 후 아래 순서대로 진행:
 
 ### Step 1: 로그인
+
 1. `POST /api/auth/login` 클릭
 2. Request body 입력:
+
    ```json
    {
      "email": "admin@gateguard.com",
      "password": "admin1234"
    }
    ```
+
 3. Execute → `access_token` 값 복사
 
 ### Step 2: 토큰 등록
+
 1. 페이지 상단 **Authorize** 버튼 클릭
 2. Value에 `Bearer {복사한_토큰}` 입력 후 Authorize
 
 ### Step 3: 카메라 목록 확인
+
 1. `GET /api/cameras` → Execute
 2. 시드 데이터로 삽입한 5개 카메라가 보이면 성공
 
 ### Step 4: 이벤트 생성
+
 1. `POST /api/events` 클릭
 2. Request body:
+
    ```json
    {
      "camera_id": 1,
@@ -75,9 +85,11 @@ docker compose exec backend python seed.py
      "confidence": 0.95
    }
    ```
+
 3. Execute → 201 응답 확인
 
 ### Step 5: 이벤트 조회
+
 1. `GET /api/events` → Execute
 2. 방금 생성한 이벤트가 목록에 표시되면 전체 흐름 정상
 

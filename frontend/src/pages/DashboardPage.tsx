@@ -12,6 +12,7 @@
 
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
+import AlertList from "@/components/dashboard/AlertList";
 
 export default function DashboardPage() {
   return (
@@ -20,8 +21,7 @@ export default function DashboardPage() {
       <div className="flex flex-col flex-1">
         <Header />
         <main className="flex-1 p-6">
-          {/* 여기에 대시보드 콘텐츠 들어올 예정 */}
-          <p className="text-gray-400 text-sm">대시보드 콘텐츠 준비 중...</p>
+          <AlertList />
         </main>
       </div>
     </div>

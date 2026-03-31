@@ -14,8 +14,8 @@ from app.models.models import Admin, Camera
 # ── 시드 데이터 정의 ─────────────────────────────────────────────────────────
 
 ADMIN_ACCOUNTS = [
-    {"email": "admin@gateguard.com", "password": "admin1234"},
-    {"email": "station01@gateguard.com", "password": "station1234"},
+    {"employee_id": "2026001", "email": "admin@gateguard.com", "password": "admin1234"},
+    {"employee_id": "2026002", "email": "station01@gateguard.com", "password": "station1234"},
 ]
 
 # 신분당선
@@ -42,6 +42,7 @@ async def seed():
                 continue
 
             admin = Admin(
+                employee_id=account["employee_id"],
                 email=account["email"],
                 password=hash_password(account["password"]),
             )
