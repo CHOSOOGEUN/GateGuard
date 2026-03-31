@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -86,8 +87,8 @@ async def update_event_status(
     current_admin: Admin = Depends(get_current_admin)
 ) -> Event:
     """
-    [GateGuard] 특정 무임승차 사건의 처리 상태(오감지, 조치완료 등)를 수동 업데이트합니다.
-    - 권한: 인증된 관리자(Admin)만 가능합니다.
+    [GateGuard] 특정 무임승차 사건의 처리 상태(오감지, 조치완료 등)를 수동 업데이트하고 기록을 남깁니다.
+    - 권한: 인증된 관리자(Admin)만 가능하며, 조치한 사원의 정보가 영구 기록됩니다.
     """
     result = await db.execute(select(Event).where(Event.id == event_id))
     event = result.scalar_one_or_none()
@@ -95,7 +96,22 @@ async def update_event_status(
     if not event:
         raise HTTPException(status_code=404, detail="해당 사건 기록을 찾을 수 없습니다.")
     
+    # 🛡️ 지휘권 각인
     event.status = body.status
+    event.handled_by = current_admin.id
+    event.handled_at = datetime.now()
+    
     await db.commit()
     await db.refresh(event)
+
+    # 📡 실시간 상태 변경 브로드캐스트 (모든 대시보드 동기화)
+    await manager.broadcast({
+        "type": "EVENT_STATUS_UPDATED",
+        "data": {
+            "id": event.id,
+            "status": event.status,
+            "handled_by_employee_id": current_admin.employee_id
+        }
+    })
+
     return event

@@ -1,14 +1,19 @@
-from __future__ import annotations
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from pydantic import BaseModel, EmailStr
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
-class AdminLogin(BaseModel):
+class AdminRegister(BaseModel):
+    employee_id: str
     email: EmailStr
+    password: str
+
+
+class AdminLogin(BaseModel):
+    employee_id: str
     password: str
 
 
@@ -50,12 +55,14 @@ class EventResponse(BaseModel):
     track_id: Optional[int]
     confidence: Optional[float]
     status: str
+    handled_by: Optional[int]
+    handled_at: Optional[datetime]
 
     model_config = {"from_attributes": True}
 
 
 class EventStatusUpdate(BaseModel):
-    status: str  # confirmed | dismissed
+    status: Literal["confirmed", "dismissed"]
 
 
 # ── Notification ──────────────────────────────────────────────────────────────

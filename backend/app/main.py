@@ -36,7 +36,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     return JSONResponse(
         status_code=500,
         content={
-            "success": false,
+            "success": False,
             "message": "서버 내부 오류가 발생했습니다. (Internal Server Error)",
             "detail": str(exc) if settings.DEBUG else "시스템 관리자에게 문의하세요."
         },

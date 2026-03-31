@@ -12,6 +12,7 @@ class Admin(Base):
     __tablename__ = "admins"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    employee_id: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
@@ -38,17 +39,30 @@ class Event(Base):
     track_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String, default="pending")  # pending | confirmed | dismissed
+    handled_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("admins.id"), nullable=True)
+    handled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     camera: Mapped["Camera"] = relationship("Camera", back_populates="events")
-    notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="event")
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", 
+        back_populates="event",
+        primaryjoin="Event.id == Notification.event_id",
+        foreign_keys="Notification.event_id"
+    )
 
 
 class Notification(Base):
     __tablename__ = "notifications"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"), nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)  # 🛡️ TimescaleDB 호환: FK 제약 제외
     sent_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     read_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
-    event: Mapped["Event"] = relationship("Event", back_populates="notifications")
+    event: Mapped["Event"] = relationship(
+        "Event", 
+        back_populates="notifications",
+        primaryjoin="Notification.event_id == Event.id",
+        foreign_keys="Notification.event_id",
+        overlaps="notifications"
+    )
