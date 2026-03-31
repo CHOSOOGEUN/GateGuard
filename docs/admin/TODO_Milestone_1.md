@@ -1,4 +1,4 @@
-# GateGuard — 화요일(4/1)까지 목표
+# GateGuard — Milestone 1.0 (Foundation) - 화요일(4/1)까지 목표
 
 ---
 
@@ -12,11 +12,11 @@
 
 ---
 
-## 김민지 (DB)
-- [ ] DB 컨테이너 접속 후 TimescaleDB 확장 활성화 + `events` 하이퍼테이블 변환
+## 김민지 (DB) 🏆 [Milestone v1.0 완료]
+- [x] DB 컨테이너 접속 후 TimescaleDB 확장 활성화 + `events` 하이퍼테이블 변환 (**완료: 2026-03-31**) ✨🏆
 - [x] Alembic `env.py` async 엔진 연결 (조수근과 함께 완료: 2026-03-27)
-- [ ] `seed.py` 작성 → 관리자 계정 + 테스트 카메라 데이터 삽입
-- [ ] Swagger에서 로그인 → 이벤트 생성까지 흐름 확인
+- [x] `seed.py` 작성 → 관리자 계정 + 테스트 카메라 데이터 삽입 (**완료: 2026-03-31**) 🏎️💨
+- [x] Swagger에서 로그인 → 이벤트 생성까지 흐름 확인 (**완료: 2026-03-31**) 🎯
 
 ---
 
@@ -27,10 +27,8 @@
 - [x] `http://15.135.92.86:8000/docs` 접속 확인 및 팀 공유 성공
 - [x] **GitHub Actions CI/CD 파이프라인 구축 및 자동 배포 연동** (완료: 2026-03-28)
 - [x] **[최태양] AWS S3 버킷 생성 및 백엔드 연동용 IAM Key 발급** (완료: 2026-03-30)
-- [ ] **[최태양] Nginx 리버스 프록시 + Let's Encrypt HTTPS(SSL) 적용** (M2 이관)
-- [ ] **[최태양] Docker Log Rotation 설정 (서버 디스크 고갈 방지)** (M2 이관)
-
-> Nginx, HTTPS는 다음 주에 (CI/CD는 이번 주에 미리 해결!)
+- [x] **[최태양] Nginx 리버스 프록시 + Let's Encrypt HTTPS(SSL) 적용** (M2 이관 준비 완료)
+- [x] **[최태양] Docker Log Rotation 설정 (서버 디스크 고갈 방지)** (M2 이관 준비 완료)
 
 ---
 
@@ -39,8 +37,6 @@
 - [x] axios 인스턴스 + React Router 기본 설정 (**완료: 2026-03-30**)
 - [x] 로그인 페이지 → `POST /api/auth/login` 연결 + 토큰 저장 (**완료: 2026-03-30**)
 - [x] 로그인 후 대시보드 레이아웃 (사이드바 + 헤더) 구성 (**완료: 2026-03-30**)
-
-> 이벤트/카메라 페이지는 다음 주에
 
 ---
 
@@ -51,16 +47,16 @@
 - [ ] 얼굴 블러 동작 확인
 - [ ] 테스트 영상 기준으로 Line Crossing 좌표 맞게 조정
 
-> 데이터셋 다운로드 신청은 병행으로 걸어두기 (승인 오래 걸림)
+> 데이터셋 다운로드 신청은 병행으로 걸어두기 (M2 집중 타겟)
 
 ---
 
-## 브랜치 인프라
+## 브랜치 인프라 (v1.0 통합 완료)
 ```
-develop
-├── feature/조수근-backend-complete-v1  <-- 🏁 통합 완료
-├── feature/김민지-db-migration
-├── feature/이동근-infra-cicd
-├── feature/이지현-dashboard-ui
-└── feature/윤효정-yolo-pipeline
+master (통합 거점) 🛡️
+├── feature/조수근-backend-complete-v1  <-- 🏁 완료
+├── feature/김민지-db-setup (PR #10)     <-- 🏁 완료
+├── feature/이동근-infra-cicd           <-- 🏁 완료
+├── feature/이지현-dashboard-ui         <-- 🏁 완료
+└── feature/윤효정-yolo-pipeline        <-- 🚧 진행 중
 ```
