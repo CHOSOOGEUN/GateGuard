@@ -1,12 +1,19 @@
 from datetime import datetime
+from typing import Optional, List, Literal
 
 from pydantic import BaseModel, EmailStr
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
-class AdminLogin(BaseModel):
+class AdminRegister(BaseModel):
+    employee_id: str
     email: EmailStr
+    password: str
+
+
+class AdminLogin(BaseModel):
+    employee_id: str
     password: str
 
 
@@ -35,25 +42,27 @@ class CameraResponse(BaseModel):
 
 class EventCreate(BaseModel):
     camera_id: int
-    clip_url: str | None = None
-    track_id: int | None = None
-    confidence: float | None = None
+    clip_url: Optional[str] = None
+    track_id: Optional[int] = None
+    confidence: Optional[float] = None
 
 
 class EventResponse(BaseModel):
     id: int
     camera_id: int
     timestamp: datetime
-    clip_url: str | None
-    track_id: int | None
-    confidence: float | None
+    clip_url: Optional[str]
+    track_id: Optional[int]
+    confidence: Optional[float]
     status: str
+    handled_by: Optional[int]
+    handled_at: Optional[datetime]
 
     model_config = {"from_attributes": True}
 
 
 class EventStatusUpdate(BaseModel):
-    status: str  # confirmed | dismissed
+    status: Literal["confirmed", "dismissed"]
 
 
 # ── Notification ──────────────────────────────────────────────────────────────
@@ -62,6 +71,6 @@ class NotificationResponse(BaseModel):
     id: int
     event_id: int
     sent_at: datetime
-    read_at: datetime | None
+    read_at: Optional[datetime]
 
     model_config = {"from_attributes": True}

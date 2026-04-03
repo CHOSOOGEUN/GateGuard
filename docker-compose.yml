@@ -38,6 +38,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - ./scripts:/app/scripts
 
   worker:
     build: ./backend
@@ -51,6 +52,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - ./scripts:/app/scripts
 
 volumes:
   pgdata:
