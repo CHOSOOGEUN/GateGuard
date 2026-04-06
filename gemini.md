@@ -103,18 +103,19 @@ Frontend
 - **백엔드 코어 인프라 구축 완료 (2026-03-27)**: JWT 인증, WebSocket 실시간 전송, Alembic 마이그레이션 세팅 포함.
 - **통합 완료 (2026-03-27)**: `feature/조수근-backend-complete-v1` 코드를 `master` 브랜치에 최종 병합 완료.
 - **AI-백엔드 1차 통합 완료 (2026-04-01)**: 윤효정 팀원의 AI 파이프라인(`inference.py`, `tracker.py`) 최종 병합 및 고도화.
-- **최우선 과제**: AI 감지 영상 클립의 실제 S3 업로드 연동 및 태양님의 도메인/모니터링 인프라 반영.
+- **최우선 과제**: 동작 인식(Action Recognition) 모델 고도화 및 프론트엔드 대시보드 통합 연동.
+- **인프라 완비 (2026-04-03)**: 도메인(`<https://gateguardsystems.com>`) 연동, SSL 인증서 발급, S3 자동 백업 및 실시간 모니터링 구축 완료.
 
 ---
 
-## 현재 개발 상태 (2026-04-01 기준)
+## 현재 개발 상태 (2026-04-06 기준)
 
 | 컴포넌트 | 상태 | 비고 |
 | :--- | :--- | :--- |
-| **백엔드 인프라** | ✅ | **[상태]** Milestone 1.0 완수 (Core & AI Integration) |
-| **DB 마이그레이션**| ✅ 완료 | Alembic v1.0 정립 및 시계열 인덱스 최적화 |
-| **데이터베이스** | ✅ 완료 | TimescaleDB 연결 및 압축 정책 반영 |
-| **비중기 작업** | ✅ 구동 중 | Celery + Redis 연동 및 S3 업로드 파이프라인 대기 |
+| **백엔드 인프라** | ✅ | **[상태]** Milestone 1.0 (Core) & 2.0 (Infra) 완수 |
+| **S3 & 모니터링** | ✅ 완료 | S3 영상 업로드 및 서버 자원 모니터링(`monitor.sh`) 구축 |
+| **도메인 & SSL** | ✅ 완료 | `https://gateguardsystems.com` HTTPS 보안 접속 지원 |
+| **데이터베이스** | ✅ 완료 | TimescaleDB 압축 정책 및 S3 일일 자동 백업 반영 |
 | **AI 파이프라인** | ✅ 완료 | ByteTrack + 얼굴 비식별화 모델 적용 및 가이드 배포 |
 
 ---
@@ -136,7 +137,7 @@ Frontend
 - [ ] **Line Crossing 좌표 정밀 조정**: 실제 역사 확보 영상 기준 좌표 최적화 🎥
 
 ### 🏗️ 이동근 · 최태양 (인프라)
-- [ ] **Nginx Reverse Proxy & SSL 완비**: HTTPS 보안 및 도메인 연동 (진행 중) 🏰
-- [ ] **서버 리소스 자가 모니터링**: CPU/Memory 임계치 알림 설정 📊
+- [x] **Nginx Reverse Proxy & SSL 완비**: HTTPS 보안 및 도메인 연동 완료 (`gateguardsystems.com`) 🏰
+- [x] **서버 리소스 자가 모니터링**: CPU/Memory 임계치 알림 및 로그 로테이션 구축 완료 📊
 
 ---

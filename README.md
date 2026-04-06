@@ -1,7 +1,8 @@
 # 🛡️ GateGuard
 
 > **지하철 개찰구 AI 기반 무임승차 실시간 감지 시스템**  
-> 경기대학교 AI컴퓨터공학부 캡스톤디자인 2026 — Milestone v1.0 (Core & AI Integration Complete)
+> 경기대학교 AI컴퓨터공학부 캡스톤디자인 2026 — <https://gateguardsystems.com>  
+> Milestone v2.0 (Infra & Automatic Deployment Complete) 🏁
 
 ---
 
@@ -77,8 +78,9 @@ docker-compose up -d
 # 컨테이너 안에서 Alembic을 통해 최신 스키마를 적용합니다.
 docker exec gateguard-backend-1 alembic upgrade head
 
-# 4. API 문서 접속
-# 주소: http://localhost:8000/docs
+# 4. API 문서 접속 (Swagger)
+# 로컬: http://localhost:8000/docs
+# 서버: https://gateguardsystems.com/docs
 ```
 
 ---

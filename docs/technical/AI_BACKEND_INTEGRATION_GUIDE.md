@@ -8,9 +8,10 @@
 
 AI 모델은 사람 감지 및 무임승차 판단 시 즉시 아래 API를 호출하여 이벤트를 기록합니다.
 
-- **URL**: `http://<BACKEND_HOST>:8000/api/events/`
+- **API 도메인**: `https://gateguardsystems.com`
 - **Method**: `POST`
 - **Authentication**: Bearer Token (수근 팀장에게 발급 문의)
+- **감지 데이터 전송**: `POST /api/events/`
 
 ### 💠 Request Payload (JSON)
 

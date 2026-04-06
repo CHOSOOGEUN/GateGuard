@@ -122,3 +122,11 @@ jobs:
             sudo docker compose exec -T backend alembic upgrade head
 
             echo "✅ 배포 완료: $(date)"
+
+      - name: Notify Deployment Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"🚀 **GateGuard 배포 성공!**\n🔗 접속 주소: <https://gateguardsystems.com>\n📅 완료 시간: $(date)\"}" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
