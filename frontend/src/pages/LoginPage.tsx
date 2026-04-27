@@ -1,24 +1,15 @@
-// 이메일, 비밀번호 유효성 검사 규칙 어떻게 할 건지
-// 실제 사용하는 기능? - 회원가입, 비번찾기
-// 파일명 규칙이 있는지.
-
 /**
  * @file LoginPage.tsx
  * @description 관리자 로그인 페이지
  *
- * ## 주요 기능
- * - POST /api/auth/login 으로 email + password 전송
- * - 응답받은 access_token을 localStorage 또는 sessionStorage에 저장
- *   - "비밀번호 기억하기" 체크 시 → localStorage (브라우저 재시작 후에도 유지)
- *   - 미체크 시 → sessionStorage (탭 닫으면 자동 로그아웃)
- * - 로그인 성공 시 /dashboard 로 이동
- * - 토큰은 axios.ts의 interceptor가 자동으로 헤더에 주입
+ * ## 기능
+ * - POST /api/auth/login (email + password)
+ * - "비밀번호 기억하기" 체크 시 localStorage, 미체크 시 sessionStorage에 토큰 저장
+ * - 로그인 성공 시 /dashboard 이동
  *
- * ## 다음 연결 작업 (feature/이지현-dashboard-ui)
- * - [x] JWT 만료 시 자동 로그아웃 처리 (axios.ts interceptor에서 처리)
- * - [x] 대시보드 레이아웃 구성 (DashboardPage.tsx)
- * - [ ] WebSocket 연결 (ws://localhost:8000/ws/events)
- * - [ ] ECharts 통계 시각화
+ * ## 주의사항
+ * - 테스트용 임시 초기값 (admin@gmail.com / 1234) 하드코딩 중 — 배포 전 제거 필요
+ * - 회원가입·비밀번호 찾기 버튼은 UI만 존재, 기능 미구현
  */
 
 import { useState } from "react";
@@ -28,8 +19,9 @@ import axios from "axios";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // TODO: 테스트용 임시 초기값 — 배포 전 제거
+  const [email, setEmail] = useState("admin@gmail.com");
+  const [password, setPassword] = useState("1234");
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

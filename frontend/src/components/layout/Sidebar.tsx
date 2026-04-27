@@ -1,6 +1,9 @@
 /**
  * @file Sidebar.tsx
- * @description 대시보드 사이드바 레이아웃 컴포넌트
+ * @description 대시보드 사이드바 컴포넌트
+ *
+ * ## TODO
+ * - [ ] 로고 이미지 파일 생기면 Shield 아이콘 → <img src="/logo.png" /> 로 교체
  */
 
 import { NavLink } from "react-router-dom";
@@ -21,7 +24,7 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-72 min-h-screen bg-white border-r border-gray-100 flex flex-col">
+    <aside className="w-64 min-h-screen bg-white border-r border-gray-100 flex flex-col">
       {/* 로고 */}
       <div className="flex items-center gap-3 px-6 py-6 border-b border-gray-100">
         <div className="w-10 h-10 rounded-xl bg-[#4B73F7] flex items-center justify-center">

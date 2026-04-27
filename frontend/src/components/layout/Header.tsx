@@ -1,10 +1,17 @@
 /**
  * @file Header.tsx
- * @description 대시보드 헤더 레이아웃 컴포넌트
+ * @description 대시보드 헤더 컴포넌트
  *
- * ## 다음 연결 작업
- * - [ ] 실시간 모니터링 뱃지 → WebSocket 연결 상태에 따라 on/off
- * - [ ] 프로필 이미지 → API에서 사용자 정보 받아서 교체
+ * ## 기능
+ * - 현재 경로 기반 페이지 타이틀 자동 표시
+ *
+ * ## 주의사항
+ * - 실시간 모니터링 뱃지는 항상 "모니터링 중"으로 고정 표시 (useWebSocket connected 상태 미연동)
+ * - 프로필 아바타는 하드코딩 ("관"), API 사용자 정보 연동 미구현
+ *
+ * ## TODO
+ * - [ ] 실시간 모니터링 뱃지 → useWebSocket connected 상태 연동하여 on/off 전환
+ * - [ ] 프로필 아바타 → API 사용자 정보로 교체
  */
 
 import { Settings } from "lucide-react";
