@@ -8,6 +8,7 @@ import HourlyDistributionChart from "@/components/stats/HourlyDistributionChart"
 import FalseAlarmTable from "@/components/stats/FalseAlarmTable";
 import CameraRankingTable from "@/components/stats/CameraRankingTable";
 import { getEvents, getEventStats, getEventStatsByCamera } from "@/api/events";
+import { labelEventType } from "@/constants/eventTypes";
 import type { EventResponse, EventStats, CameraEventStats } from "@/types";
 
 const DAILY_DAYS = 12;
@@ -45,8 +46,9 @@ function buildHourlyData(events: EventResponse[]) {
 function buildTypeData(events: EventResponse[]) {
   const result: Record<string, number> = {};
   events.forEach((e) => {
-    const type = e.event_type ?? "기타";
-    result[type] = (result[type] ?? 0) + 1;
+    if (!e.event_type || e.event_type === "normal" || e.event_type === "unknown") return;
+    const label = labelEventType(e.event_type);
+    result[label] = (result[label] ?? 0) + 1;
   });
   return result;
 }

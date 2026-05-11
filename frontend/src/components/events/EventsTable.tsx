@@ -24,6 +24,7 @@
 
 import { Download } from "lucide-react";
 import type { EventResponse } from "@/types";
+import { labelEventType } from "@/constants/eventTypes";
 
 interface EventsTableProps {
   /** 현재 페이지에 표시할 이벤트 (페이지네이션 적용 후) */
@@ -78,7 +79,7 @@ function exportToCSV(events: EventResponse[]) {
     `EV-${String(e.id).padStart(4, "0")}`,
     formatTime(e.timestamp),
     [e.camera?.station_name, e.camera?.location].filter(Boolean).join(" "),
-    e.event_type ?? e.description ?? "",
+    e.event_type ? labelEventType(e.event_type) : "",
     getSeverity(e).label,
     (e.appearance_tags ?? []).join(" "),
     `CAM-${String(e.camera_id).padStart(2, "0")}`,
@@ -169,7 +170,7 @@ export default function EventsTable({
                   `CAM-${String(event.camera_id).padStart(2, "0")}`;
                 const gate = event.camera?.location ?? "";
                 const camLabel = `CAM-${String(event.camera_id).padStart(2, "0")}`;
-                const detectionType = event.event_type ?? event.description ?? "—";
+                const detectionType = event.event_type ? labelEventType(event.event_type) : "—";
                 const appearance =
                   event.appearance_tags && event.appearance_tags.length > 0
                     ? event.appearance_tags.join(" ")

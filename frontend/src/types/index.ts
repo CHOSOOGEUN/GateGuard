@@ -31,9 +31,9 @@ export interface EventResponse {
   description?: string; // AI 분석 설명 / 감지 유형 텍스트 (백엔드 응답에 포함 시 활용)
   appearance_tags?: string[]; // 인상착의 태그 (백엔드 응답에 포함 시 활용)
   camera?: CameraResponse; // 프론트에서 카메라 API 조인 후 주입 (백엔드 응답에는 camera_id만 있음)
-  event_type?: string; // 감지유형 (예: '태그 없이 통행', '테일게이팅') — 백엔드 확정 필요
-  assigned_to?: string; // 담당자 — 백엔드 확정 필요
-  reason?: string; // 오탐신고 사유 (status=false_alarm 인 경우)
+  event_type?: string; // 감지유형 영문값 (tailgating | jump | crawling | unpaid | emergencydoor | normal | unknown)
+  assigned_to?: string; // 담당자
+  reason?: string | null; // 오탐신고 사유 (status=false_alarm 일 때만 값, 나머지 null)
   handled_by?: number | null; // 처리한 사용자 ID
   handled_at?: string | null; // 처리 완료 시각 ISO 8601 (평균 처리 시간 계산용)
 }

@@ -132,10 +132,8 @@ export default function EventsPage() {
         }
       }
 
-      // 감지유형 필터 (event_type 우선, description fallback)
       if (filters.type) {
-        const eventType = e.event_type ?? e.description ?? "";
-        if (!eventType.includes(filters.type)) return false;
+        if ((e.event_type ?? "") !== filters.type) return false;
       }
 
       // 카메라 필터

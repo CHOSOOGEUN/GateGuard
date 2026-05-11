@@ -54,13 +54,8 @@ const PERIOD_OPTIONS = [
   { value: "month", label: "이번 달" },
 ];
 
-const TYPE_OPTIONS = [
-  { value: "", label: "전체 유형" },
-  { value: "태그 없이 통행", label: "태그 없이 통행" },
-  { value: "테일게이팅", label: "테일게이팅" },
-  { value: "비상문 강제 진입", label: "비상문 강제 진입" },
-  { value: "역방향 진입", label: "역방향 진입" },
-];
+import { EVENT_TYPE_OPTIONS } from "@/constants/eventTypes";
+const TYPE_OPTIONS = EVENT_TYPE_OPTIONS;
 
 const STATUS_OPTIONS = [
   { value: "", label: "전체 상태" },
