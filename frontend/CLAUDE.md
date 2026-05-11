@@ -55,6 +55,8 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 ### Component Organization
 - `src/components/layout/` — `Sidebar`, `Header`
 - `src/components/dashboard/` — `StatCards`, `StatCard`, `AlertList`, `AlertItem`, `CameraStats`, `FalseAlarmList`, `EventDetailModal`, `FalseAlarmModal`
+  - `EventDetailModal` — 단일 이벤트 상세. FalseAlarmModal을 내부에서 직접 렌더링. 처리완료/오탐신고 완료 시 버튼 → 완료 문구로 전환 (서버 `handled_at` 재조회)
+  - `FalseAlarmModal` — `onSubmitted(reason: string)` 콜백으로 reason 전달. AlertItem 경유 시 DashboardPage가 렌더링, EventDetailModal 경유 시 EventDetailModal이 내부 렌더링
 - `src/components/events/` — `EventsFilter`, `EventsTable`, `EventsPagination`
 - `src/components/stats/` — `StatSummaryCards`, `DailyTrendChart`, `EventTypeChart`, `HourlyDistributionChart`, `FalseAlarmTable`, `CameraRankingTable`
 - `src/components/ui/` — shadcn/ui primitives (generated via `npx shadcn add <component>`)
@@ -124,7 +126,7 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 ### EventStatus 값
 백엔드 확정 상태값 3종: `pending` (미처리) | `confirmed` (처리완료) | `false_alarm` (오탐)
 - `pending` → 상세보기·오탐신고 버튼 활성화, 빨간 dot 표시
-- `confirmed` / `false_alarm` → 기록보기 버튼만 표시
+- `confirmed` / `false_alarm` → 버튼 없음, 완료 문구만 표시
 
 ## 구현 현황
 
@@ -136,6 +138,10 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 - API 모듈 (`events.ts`, `cameras.ts`, `notifications.ts`)
 - Sidebar + Header 레이아웃
 - DashboardPage 전체 (API 연동, WebSocket, 4개 위젯, 2개 모달)
+  - CameraStats — 역별 알림현황 (건수 내림차순, 최대 5개, WebSocket 실시간 순위 변동)
+  - EventDetailModal — 영상 + 상세정보 패널. 역무원파견(confirm→비활성화)/처리완료(confirm→PATCH)/오탐신고(FalseAlarmModal 내장). 처리 후 서버 `handled_at` 재조회 후 완료 문구 표시
+  - FalseAlarmModal — `onSubmitted(reason)` 으로 reason 반환. EventDetailModal 내부 렌더링 (AlertItem 직접 접근 시 DashboardPage 렌더링)
+  - WebSocket NEW_EVENT 시 stats + cameraStats 낙관적 업데이트
 - EventsPage (전체 발생내역 — 필터/클라이언트 페이지네이션, WebSocket 실시간 삽입)
 - StatsPage (ECharts 통계 시각화)
   - StatSummaryCards — 총발생/일평균/오탐율/평균처리시간 4개 카드
@@ -150,7 +156,7 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 ### ⚠️ 미구현
 1. **Auth route guard** — 토큰 없으면 `/`로 리다이렉트 (백엔드 켜진 상태에서는 401로 사실상 동작)
 2. **SettingsPage** — 설정 기능 (현재 placeholder)
-3. **역무원 파견** — `EventDetailModal` 버튼 클릭 시 alert()만 뜸, API 없음
+3. **역무원 파견** — confirm 후 버튼 비활성화까지만 구현. 백엔드 API 없어서 실제 파견 처리 불가. 모달 닫고 재열면 파견 상태 리셋됨 (로컬 state)
 4. **FalseAlarmList 항목 클릭** — 클릭 시 상세 모달 미연결 (`NotificationResponse`에 `event` embed 백엔드 확인 필요)
 5. **회원가입 / 비밀번호 찾기** — `LoginPage` 버튼 UI만 존재
 6. **지도보기** — `CameraStats` 버튼 핸들러 없음

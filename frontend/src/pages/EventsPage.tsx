@@ -4,19 +4,15 @@
  *
  * ## 기능
  * - GET /api/cameras/ + GET /api/events/?limit=500 병렬 호출 후 카메라 정보 조인
- * - 클라이언트사이드 필터: 텍스트 검색(EV-번호/CAM-번호/역/게이트/인상착의/설명) / 기간 / 감지유형 / 카메라 / 상태 / 역
+ * - 클라이언트사이드 필터: 텍스트 검색 / 기간 / 감지유형 / 카메라 / 상태 / 역
  * - 클라이언트사이드 페이지네이션: 기본 8건, 선택 가능 (8 / 16 / 32)
- * - EventDetailModal / FalseAlarmModal 재사용 (DashboardPage와 동일 컴포넌트)
- * - EventDetailModal에는 allEvents 전달 (필터된 배열 아님) — 모달 내 이전/다음 탐색을 위해
+ * - EventDetailModal 재사용 (FalseAlarmModal은 EventDetailModal 내부에서 관리)
  * - WebSocket NEW_EVENT 수신 시 카메라 정보 조인 후 allEvents 앞에 실시간 삽입
  * - AppContext를 통해 wsConnected 상태 공유
  *
  * ## 주의사항
  * - 현재 클라이언트사이드 페이지네이션 (limit=500 fetch)
- *   → 이벤트 수 대규모 시 GET /api/events/?skip=N&limit=M 서버사이드로 전환 필요
- *
- * ## TODO
- * - [ ] 서버사이드 페이지네이션 전환 (백엔드 skip/limit 파라미터 지원 확인 후)
+ *   → 데모 단계 유지. 실데이터 시 GET /api/events/?skip=N&limit=M 서버사이드로 전환 필요
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -29,7 +25,6 @@ import EventsFilter, {
 import EventsTable from "@/components/events/EventsTable";
 import EventsPagination from "@/components/events/EventsPagination";
 import EventDetailModal from "@/components/dashboard/EventDetailModal";
-import FalseAlarmModal from "@/components/dashboard/FalseAlarmModal";
 import { getEvents } from "@/api/events";
 import { getCameras } from "@/api/cameras";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -45,7 +40,6 @@ export default function EventsPage() {
   const cameraMapRef = useRef<Map<number, CameraResponse>>(new Map());
   const [pageSize, setPageSize] = useState(8);
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
-  const [falseAlarmEvent, setFalseAlarmEvent] = useState<EventResponse | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -190,12 +184,6 @@ export default function EventsPage() {
     return Array.from(stations).sort();
   }, [allEvents]);
 
-  // ── 모달 핸들러 ────────────────────────────────────
-  const handleOpenFalseAlarm = (event: EventResponse) => {
-    setSelectedEvent(null);
-    setFalseAlarmEvent(event);
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
@@ -239,19 +227,11 @@ export default function EventsPage() {
         <EventDetailModal
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
-          onFalseAlarm={handleOpenFalseAlarm}
           onConfirmed={fetchAll}
         />
       )}
 
-      {/* 오탐신고 모달 (재사용) */}
-      {falseAlarmEvent && (
-        <FalseAlarmModal
-          event={falseAlarmEvent}
-          onClose={() => setFalseAlarmEvent(null)}
-          onSubmitted={fetchAll}
-        />
-      )}
+
     </div>
   );
 }

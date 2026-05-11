@@ -5,14 +5,8 @@
  * ## 기능
  * - 오탐 사유 4가지 라디오 선택 (기타 선택 시 직접 입력)
  * - POST /api/events/{id}/false-alarm { reason, memo? } 호출 후 닫기
- * - AlertItem 또는 EventDetailModal의 오탐신고 버튼으로 진입
- *
- * ## 주의사항
- * - 오탐신고 완료 후 onSubmitted() 콜백으로 DashboardPage/EventsPage의 refresh() 호출
- * - POST /api/events/{id}/false-alarm 백엔드 M2 구현 예정
- *
- * ## 백엔드 확정 후 수정 필요
- * - 요청 바디 필드명 ({ reason, memo? }) 확정 필요
+ * - EventDetailModal 내부에서 렌더링 (DashboardPage의 AlertItem 경유 시 DashboardPage가 직접 렌더링)
+ * - 제출 완료 시 onSubmitted(reason) 콜백으로 reason 전달
  */
 
 import { useState } from "react";
@@ -23,7 +17,7 @@ import { reportFalseAlarm } from "@/api/events";
 interface FalseAlarmModalProps {
   event: EventResponse;
   onClose: () => void;
-  onSubmitted: () => void;
+  onSubmitted: (reason: string) => void;
 }
 
 const REASONS = [
@@ -64,7 +58,7 @@ export default function FalseAlarmModal({
         reason,
         memo: selectedReason === "기타" ? memo.trim() : undefined,
       });
-      onSubmitted();
+      onSubmitted(reason);
       onClose();
     } catch {
       setError("오탐 신고 중 오류가 발생했습니다.");
