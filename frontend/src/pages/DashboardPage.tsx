@@ -119,12 +119,13 @@ export default function DashboardPage() {
       // 통계 카드 낙관적 업데이트
       setStats((prev) =>
         prev
-          ? {
-              ...prev,
-              today_total: prev.today_total + 1,
-              pending: prev.pending + 1,
-            }
+          ? { ...prev, today_total: prev.today_total + 1, pending: prev.pending + 1 }
           : prev,
+      );
+      setCameraStats((prev) =>
+        prev.map((c) =>
+          c.camera_id === newEvent.camera_id ? { ...c, count: c.count + 1 } : c,
+        ),
       );
     }
   });

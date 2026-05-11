@@ -33,6 +33,9 @@ export interface EventResponse {
   camera?: CameraResponse; // 프론트에서 카메라 API 조인 후 주입 (백엔드 응답에는 camera_id만 있음)
   event_type?: string; // 감지유형 (예: '태그 없이 통행', '테일게이팅') — 백엔드 확정 필요
   assigned_to?: string; // 담당자 — 백엔드 확정 필요
+  reason?: string; // 오탐신고 사유 (status=false_alarm 인 경우)
+  handled_by?: number | null; // 처리한 사용자 ID
+  handled_at?: string | null; // 처리 완료 시각 ISO 8601 (평균 처리 시간 계산용)
 }
 
 // 백엔드 GET /api/events/stats 응답 필드명과 일치
