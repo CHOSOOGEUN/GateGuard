@@ -182,8 +182,7 @@ export default function DashboardPage() {
       {/* 이벤트 상세 모달 */}
       {selectedEvent && (
         <EventDetailModal
-          events={events}
-          initialEvent={selectedEvent}
+          event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
           onFalseAlarm={handleOpenFalseAlarm}
           onConfirmed={refresh}

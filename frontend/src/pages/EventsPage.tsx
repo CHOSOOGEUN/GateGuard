@@ -237,8 +237,7 @@ export default function EventsPage() {
       {/* 이벤트 상세 모달 (재사용) */}
       {selectedEvent && (
         <EventDetailModal
-          events={allEvents}
-          initialEvent={selectedEvent}
+          event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
           onFalseAlarm={handleOpenFalseAlarm}
           onConfirmed={fetchAll}
