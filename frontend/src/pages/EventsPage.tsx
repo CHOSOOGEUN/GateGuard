@@ -5,7 +5,7 @@ import EventsFilter from "@/components/events/EventsFilter";
 import EventsTable from "@/components/events/EventsTable";
 import EventsPagination from "@/components/events/EventsPagination";
 import EventDetailModal from "@/components/dashboard/EventDetailModal";
-import { useAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/hooks/useAppContext";
 import { useEventsData } from "@/hooks/useEventsData";
 import { useEventsFilter } from "@/hooks/useEventsFilter";
 import type { EventResponse } from "@/types";

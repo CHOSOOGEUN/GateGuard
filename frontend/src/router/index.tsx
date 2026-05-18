@@ -1,16 +1,10 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
 import StatsPage from "../pages/StatsPage";
 import EventsPage from "../pages/EventsPage";
 import SettingsPage from "../pages/SettingsPage";
-import type { ReactNode } from "react";
-
-function PrivateRoute({ children }: { children: ReactNode }) {
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  if (!token) return <Navigate to="/" replace />;
-  return <>{children}</>;
-}
+import PrivateRoute from "./PrivateRoute";
 
 export const router = createBrowserRouter([
   {

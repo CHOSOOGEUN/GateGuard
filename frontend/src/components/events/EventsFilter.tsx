@@ -1,23 +1,6 @@
 import { Search, ChevronDown } from "lucide-react";
 import { EVENT_TYPE_OPTIONS } from "@/constants/eventTypes";
-
-export interface EventFilters {
-  search: string;
-  period: "all" | "today" | "week" | "month";
-  type: string;
-  cameraId: string;
-  status: string;
-  station: string;
-}
-
-export const DEFAULT_FILTERS: EventFilters = {
-  search: "",
-  period: "all",
-  type: "",
-  cameraId: "",
-  status: "",
-  station: "",
-};
+import { DEFAULT_FILTERS, type EventFilters } from "./eventFiltersConfig";
 
 interface EventsFilterProps {
   filters: EventFilters;

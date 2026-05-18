@@ -2,7 +2,7 @@ import { Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/hooks/useAppContext";
 
 function getAvatarLabel(): string {
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");

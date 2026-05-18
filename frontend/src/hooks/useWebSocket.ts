@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const WS_URL = import.meta.env.VITE_WS_URL as string;
 
@@ -11,7 +11,9 @@ export function useWebSocket(onMessage: (msg: WsMessage) => void): {
   connected: boolean;
 } {
   const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage; // 매 렌더마다 최신 콜백으로 갱신
+  useLayoutEffect(() => {
+    onMessageRef.current = onMessage;
+  });
 
   const [connected, setConnected] = useState(false);
 

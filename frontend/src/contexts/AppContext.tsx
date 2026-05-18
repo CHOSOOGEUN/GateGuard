@@ -1,19 +1,6 @@
-import { createContext, useContext, useState } from "react";
+import { useState } from "react";
 import type { ReactNode } from "react";
-
-interface AppContextValue {
-  wsConnected: boolean;
-  setWsConnected: (v: boolean) => void;
-  unconfirmedCount: number;
-  setUnconfirmedCount: (v: number) => void;
-}
-
-const AppContext = createContext<AppContextValue>({
-  wsConnected: false,
-  setWsConnected: () => {},
-  unconfirmedCount: 0,
-  setUnconfirmedCount: () => {},
-});
+import { AppContext } from "./appContextDef";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [wsConnected, setWsConnected] = useState(false);
@@ -27,5 +14,3 @@ export function AppProvider({ children }: { children: ReactNode }) {
     </AppContext.Provider>
   );
 }
-
-export const useAppContext = () => useContext(AppContext);

@@ -6,7 +6,7 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
-import { useAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/hooks/useAppContext";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "대시보드" },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/hooks/useAppContext";
 import { getEvents, getEventStats, getEventStatsByCamera } from "@/api/events";
 import { getNotifications } from "@/api/notifications";
 import { getCameras } from "@/api/cameras";
@@ -24,12 +24,7 @@ export function useDashboardData() {
   const [loadingNotif, setLoadingNotif] = useState(true);
   const cameraMapRef = useRef<Map<number, CameraResponse>>(new Map());
 
-  const refresh = useCallback(async () => {
-    setLoadingEvents(true);
-    setLoadingStats(true);
-    setLoadingCamera(true);
-    setLoadingNotif(true);
-
+  const doFetch = useCallback(async () => {
     const [camResult, evResult, statsResult, camStatsResult, notifResult] =
       await Promise.allSettled([
         getCameras(),
@@ -62,9 +57,17 @@ export function useDashboardData() {
     setLoadingNotif(false);
   }, []);
 
+  const refresh = useCallback(async () => {
+    setLoadingEvents(true);
+    setLoadingStats(true);
+    setLoadingCamera(true);
+    setLoadingNotif(true);
+    await doFetch();
+  }, [doFetch]);
+
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    doFetch();
+  }, [doFetch]);
 
   const { connected } = useWebSocket((msg) => {
     if (msg.type === "NEW_EVENT") {

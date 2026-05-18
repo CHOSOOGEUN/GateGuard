@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import { DEFAULT_FILTERS } from "@/components/events/EventsFilter";
-import type { EventFilters } from "@/components/events/EventsFilter";
+import { DEFAULT_FILTERS, type EventFilters } from "@/components/events/eventFiltersConfig";
 import type { EventResponse } from "@/types";
 
 export function useEventsFilter(allEvents: EventResponse[]) {
