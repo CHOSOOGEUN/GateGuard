@@ -24,7 +24,11 @@ export default function RegisterForm({ onLogin }: RegisterFormProps) {
     }
     setLoading(true);
     try {
-      await api.post("/api/auth/register", { employee_id: employeeId, email, password });
+      await api.post("/api/auth/register", {
+        employee_id: employeeId,
+        email,
+        password,
+      });
       setSuccess("가입이 완료되었습니다. 로그인해 주세요.");
       setTimeout(onLogin, 1500);
     } catch (err) {
@@ -45,7 +49,9 @@ export default function RegisterForm({ onLogin }: RegisterFormProps) {
       </h1>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">사원번호</label>
+          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            사원번호
+          </label>
           <input
             type="text"
             placeholder="사원번호 입력"
@@ -56,7 +62,9 @@ export default function RegisterForm({ onLogin }: RegisterFormProps) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">이메일</label>
+          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            이메일
+          </label>
           <input
             type="email"
             placeholder="이메일 주소 입력"
@@ -67,7 +75,9 @@ export default function RegisterForm({ onLogin }: RegisterFormProps) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">비밀번호</label>
+          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            비밀번호
+          </label>
           <input
             type="password"
             placeholder="비밀번호 입력"
@@ -78,7 +88,9 @@ export default function RegisterForm({ onLogin }: RegisterFormProps) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">비밀번호 확인</label>
+          <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            비밀번호 확인
+          </label>
           <input
             type="password"
             placeholder="비밀번호 재입력"
@@ -95,11 +107,15 @@ export default function RegisterForm({ onLogin }: RegisterFormProps) {
           disabled={loading}
           className="w-full py-3 rounded-full bg-[#4B73F7] text-white font-semibold text-base hover:bg-[#3a62e6] transition disabled:opacity-60"
         >
-          {loading ? "가입 중..." : "가입하기"}
+          {loading ? "가입 중..." : "Sign up"}
         </button>
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
           이미 계정이 있으신가요?{" "}
-          <button type="button" onClick={onLogin} className="text-[#4B73F7] font-semibold hover:underline">
+          <button
+            type="button"
+            onClick={onLogin}
+            className="text-[#4B73F7] font-semibold hover:underline"
+          >
             로그인
           </button>
         </p>
