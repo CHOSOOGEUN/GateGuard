@@ -1,26 +1,3 @@
-/**
- * @file pages/DashboardPage.tsx
- * @description 대시보드 메인 페이지 — 데이터 페칭 및 상태 관리 총괄
- *
- * ## 기능
- * - 마운트 시 5개 API 병렬 호출 (Promise.allSettled):
- *   - GET /api/cameras/               카메라 목록 (위치 정보 조인용)
- *   - GET /api/events/?limit=10       최신 이벤트 10건
- *   - GET /api/events/stats           통계 카드 데이터
- *   - GET /api/events/stats/by-camera 역별 알림현황
- *   - GET /api/notifications/?unread_only=false 오탐 신고 목록
- * - cameraMapRef로 카메라 맵 관리: WebSocket 핸들러에서도 최신 맵을 참조하여 역이름/게이트 조인
- * - WebSocket NEW_EVENT 수신 시 카메라 정보 조인 후 목록 맨 앞 삽입, 최대 10건 유지
- *   stats + cameraStats 낙관적 업데이트 (해당 camera_id count +1)
- * - 처리완료 / 오탐신고 완료 후 refresh()로 전체 상태 재동기화
- * - FalseAlarmModal은 AlertItem 경유 시 DashboardPage가 직접 렌더링
- *   (EventDetailModal 경유 시는 EventDetailModal 내부에서 관리)
- *
- * ## 주의사항
- * - 401 응답은 axios interceptor가 자동으로 `/`로 리다이렉트 처리
- * - AppContext를 통해 wsConnected, unconfirmedCount를 Sidebar/Header에 공유
- */
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAppContext } from "@/contexts/AppContext";
 import Sidebar from "@/components/layout/Sidebar";

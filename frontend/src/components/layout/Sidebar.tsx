@@ -1,14 +1,3 @@
-/**
- * @file Sidebar.tsx
- * @description 대시보드 사이드바 컴포넌트
- *
- * ## 기능
- * - AppContext의 unconfirmedCount > 0 이면 대시보드 메뉴 항목에 빨간 뱃지 표시 (최대 99+)
- *
- * ## TODO
- * - [ ] 로고 이미지 파일 생기면 Shield 아이콘 → <img src="/logo.png" /> 로 교체
- */
-
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,

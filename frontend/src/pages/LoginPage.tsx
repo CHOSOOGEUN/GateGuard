@@ -79,7 +79,7 @@ export default function LoginPage() {
       setRegPasswordConfirm("");
       setTimeout(() => switchStep("login"), 1500);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 409) {
+      if (axios.isAxiosError(err) && err.response?.status === 400) {
         setError("이미 사용 중인 사원번호 또는 이메일입니다.");
       } else {
         setError("가입 중 오류가 발생했습니다.");
@@ -94,9 +94,8 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await api.post("/api/auth/find-pw", {
-        employee_id: fpEmployeeId,
-        email: fpEmail,
+      await api.post("/api/auth/find-pw", null, {
+        params: { employee_id: fpEmployeeId, email: fpEmail },
       });
       setSuccess("입력하신 이메일로 임시 비밀번호를 발송했습니다.");
       setFpEmployeeId("");

@@ -1,20 +1,3 @@
-/**
- * @file pages/EventsPage.tsx
- * @description 전체 발생내역 페이지
- *
- * ## 기능
- * - GET /api/cameras/ + GET /api/events/?limit=500 병렬 호출 후 카메라 정보 조인
- * - 클라이언트사이드 필터: 텍스트 검색 / 기간 / 감지유형 / 카메라 / 상태 / 역
- * - 클라이언트사이드 페이지네이션: 기본 8건, 선택 가능 (8 / 16 / 32)
- * - EventDetailModal 재사용 (FalseAlarmModal은 EventDetailModal 내부에서 관리)
- * - WebSocket NEW_EVENT 수신 시 카메라 정보 조인 후 allEvents 앞에 실시간 삽입
- * - AppContext를 통해 wsConnected 상태 공유
- *
- * ## 주의사항
- * - 현재 클라이언트사이드 페이지네이션 (limit=500 fetch)
- *   → 데모 단계 유지. 실데이터 시 GET /api/events/?skip=N&limit=M 서버사이드로 전환 필요
- */
-
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";

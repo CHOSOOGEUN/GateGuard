@@ -1,17 +1,3 @@
-/**
- * @file components/events/EventsPagination.tsx
- * @description 전체 발생내역 페이지네이션 컴포넌트
- *
- * ## 기능
- * - 좌측: "총 N건 중 A-B 표시"
- * - 중앙: 이전/다음 버튼 + 페이지 번호 버튼 (7개 초과 시 슬라이딩 윈도우 + 말줄임)
- * - 우측: 페이지당 건수 선택 (8 / 16 / 32)
- *
- * ## 주의사항
- * - 클라이언트사이드 페이지네이션 기준 (EventsPage에서 filteredEvents.slice 후 전달)
- * - 서버사이드 전환 시 onPageChange / onPageSizeChange 시그니처 그대로 유지 가능
- */
-
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 interface EventsPaginationProps {

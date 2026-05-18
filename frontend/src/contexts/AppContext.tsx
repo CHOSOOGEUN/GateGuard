@@ -1,17 +1,3 @@
-/**
- * @file contexts/AppContext.tsx
- * @description 앱 전역 상태 컨텍스트
- *
- * ## 공유 상태
- * - wsConnected: WebSocket 연결 여부 → Header 실시간 모니터링 뱃지 on/off
- * - unconfirmedCount: 미확인 이벤트 수 → Sidebar 빨간 뱃지
- *
- * ## 사용처
- * - wsConnected 설정: DashboardPage, EventsPage (useWebSocket 연결 시)
- * - unconfirmedCount 설정: DashboardPage
- * - 읽기: Header (wsConnected), Sidebar (unconfirmedCount)
- */
-
 import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 

@@ -1,24 +1,3 @@
-/**
- * @file components/dashboard/FalseAlarmList.tsx
- * @description 대시보드 최근 오탐 신고 목록 컴포넌트
- *
- * ## 기능
- * - GET /api/notifications/?unread_only=false 응답 최대 5건 표시
- * - read_at === null → 검토 중 (노란 아이콘) / read_at !== null → 오탐 확인 (초록 아이콘)
- * - loading 시 스켈레톤 / 빈 배열 시 안내 문구 표시
- *
- * ## 주의사항
- * - GET /api/notifications/ 는 인증 불필요 API
- *
- * ## TODO
- * - [ ] 전체보기 버튼 → 오탐 신고 전체 목록 페이지 라우팅 연결
- * - [ ] 항목 클릭 시 해당 이벤트 상세보기 Modal 연동
- *
- * ## 협의
- * - NotificationResponse에 event 정보 embed 여부 백엔드(조수근) 확인 필요
- */
-
-import { Link } from "react-router-dom";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import type { NotificationResponse } from "@/types";
 
@@ -52,11 +31,8 @@ export default function FalseAlarmList({
 }: FalseAlarmListProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h2 className="font-bold text-gray-900 dark:text-white">최근 오탐 신고</h2>
-        <Link to="/events" className="text-xs text-[#4B73F7] hover:underline">
-          전체보기
-        </Link>
       </div>
 
       {loading ? (

@@ -1,26 +1,5 @@
-/**
- * @file components/events/EventsFilter.tsx
- * @description 전체 발생내역 필터 바 컴포넌트
- *
- * ## 기능
- * - 텍스트 검색: EV-번호 / CAM-번호 / 역이름 / 게이트이름 / 인상착의 / 설명 대상 실시간 필터링
- * - 기간 드롭다운: 전체 / 오늘 / 이번 주 / 이번 달
- * - 유형 드롭다운: event_type 또는 description 기반 필터링
- * - 카메라 드롭다운: 로드된 이벤트에서 추출한 CAM-XX 목록
- * - 상태 드롭다운: 미확인(pending) / 처리완료(confirmed) / 오탐(false_alarm)
- * - 역 드롭다운: 로드된 이벤트에서 추출한 역이름 목록
- * - 초기화 버튼: 모든 필터 초기화
- *
- * ## 주의사항
- * - cameraOptions, stationOptions는 EventsPage에서 allEvents 기반으로 추출해서 전달
- * - 유형 필터는 event_type 필드가 없으면 description으로 fallback
- *
- * ## TODO
- * - [ ] 기간 필터 직접 선택(날짜 picker) 기능 추가
- * - [ ] 감지유형 목록 백엔드 스펙 확정 후 수정
- */
-
 import { Search, ChevronDown } from "lucide-react";
+import { EVENT_TYPE_OPTIONS } from "@/constants/eventTypes";
 
 export interface EventFilters {
   search: string;
@@ -53,9 +32,6 @@ const PERIOD_OPTIONS = [
   { value: "week", label: "이번 주" },
   { value: "month", label: "이번 달" },
 ];
-
-import { EVENT_TYPE_OPTIONS } from "@/constants/eventTypes";
-const TYPE_OPTIONS = EVENT_TYPE_OPTIONS;
 
 const STATUS_OPTIONS = [
   { value: "", label: "전체 상태" },
@@ -135,7 +111,7 @@ export default function EventsFilter({
       <FilterSelect
         value={filters.type}
         onChange={(v) => update({ type: v })}
-        options={TYPE_OPTIONS}
+        options={EVENT_TYPE_OPTIONS}
       />
 
       {/* 카메라 */}

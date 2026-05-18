@@ -1,25 +1,3 @@
-/**
- * @file components/dashboard/AlertItem.tsx
- * @description 최신알림 개별 카드 컴포넌트
- *
- * ## 기능
- * - 미처리(pending/detected): 파란 [상세보기] + 파란 outline [오탐신고] 버튼
- * - 처리완료(confirmed/false_alarm): 파란 outline [기록보기] 버튼
- * - 심각도 뱃지: confidence 기반 (≥0.7 고위험 / <0.7 중간 / 처리 후 처리완료·오탐)
- * - 위치: camera embed 시 "역명 게이트명", 루트 직접 필드 시에도 동일 표시, 없으면 "CAM-XX"
- * - description 있으면 감지 유형 표시, 없으면 status 기반 기본 문구 fallback
- *
- * ## 주의사항
- * - isActive: pending → 상세보기·오탐신고 버튼 / confirmed | false_alarm → 기록보기 버튼
- * - getLocationLabel: camera 객체 embed 또는 루트 직접 필드(station_name/location) 모두 대응, 없으면 "CAM-XX" fallback
- *
- * ## TODO
- * - [ ] 카메라 썸네일 실제 CCTV 스냅샷 연동 (clip_url or 별도 API)
- *
- * ## 백엔드 확정 후 수정 필요
- * - description, appearance_tags 필드명 확정 필요
- */
-
 import type { EventResponse } from "@/types";
 
 interface AlertItemProps {
@@ -28,15 +6,14 @@ interface AlertItemProps {
   onFalseAlarm: (event: EventResponse) => void;
 }
 
-/** confidence 기반 심각도 뱃지. 처리 완료 상태는 별도 레이블 반환 */
-function getSeverity(event: EventResponse): { label: string; color: string } {
+function getSeverity(event: EventResponse): { label: string; cls: string } {
   if (event.status === "confirmed")
-    return { label: "처리완료", color: "bg-gray-100 text-gray-500" };
+    return { label: "처리완료", cls: "bg-gray-100 text-gray-500" };
   if (event.status === "false_alarm")
-    return { label: "오탐", color: "bg-gray-100 text-gray-400" };
+    return { label: "오탐", cls: "bg-gray-100 text-gray-400" };
   if ((event.confidence ?? 0) >= 0.7)
-    return { label: "고위험", color: "bg-red-100 text-red-500" };
-  return { label: "중간", color: "bg-yellow-100 text-yellow-600" };
+    return { label: "고위험", cls: "bg-red-100 text-red-500" };
+  return { label: "중간", cls: "bg-yellow-100 text-yellow-600" };
 }
 
 function formatTime(timestamp: string): string {
@@ -80,7 +57,7 @@ export default function AlertItem({
           CAM-{String(event.camera_id).padStart(2, "0")}
         </div>
         <span
-          className={`absolute -bottom-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${severity.color}`}
+          className={`absolute -bottom-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${severity.cls}`}
         >
           {severity.label}
         </span>
