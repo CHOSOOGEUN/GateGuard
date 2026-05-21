@@ -23,14 +23,14 @@ No test runner is configured yet.
 - Login via `POST /api/auth/login` → receives `access_token` (JWT)
 - Token stored in `localStorage` (remember me) or `sessionStorage` (session only)
 - All API calls use the singleton `src/api/axios.ts` instance, which auto-injects the Bearer token via request interceptor and redirects to `/` on 401
-- **Route guard is NOT yet implemented** — 백엔드 켜진 상태에서는 401 인터셉터가 사실상 guard 역할. 백엔드 꺼진 상태에서는 토큰 없이 모든 라우트 접근 가능
+- Route guard: `src/router/index.tsx` — `PrivateRoute` 컴포넌트, 토큰 없으면 `/`로 리다이렉트
 
 ### Routing (`src/router/index.tsx`)
 - `/` → `LoginPage` (public)
 - `/dashboard` → `DashboardPage` ✅ 구현완료
 - `/stats` → `StatsPage` ✅ 구현완료
 - `/events` → `EventsPage` ✅ 구현완료
-- `/settings` → `SettingsPage` ⚠️ placeholder ("준비 중" 텍스트만)
+- `/settings` → `SettingsPage` ✅ 구현완료 (내 프로필 + 카메라 관리)
 
 ### Layout Pattern
 Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<Header />` (top) + `<main>` content. Assemble these manually in each page — no shared layout wrapper component.
@@ -47,21 +47,30 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 - 3개 API 병렬 fetch: `GET /api/events/?limit=1000`, `GET /api/events/stats`, `GET /api/events/stats/by-camera`
 - 이벤트 목록을 `useMemo`로 가공: 날짜별/시간대별/유형별/오탐사유별 집계
 - 평균 처리 시간: `confirmed` 이벤트의 `handled_at - timestamp` 평균 (분 단위)
+- `event_type`, `reason` 필드 실데이터 정상 수신 중 → EventTypeChart, FalseAlarmTable 실데이터 표시
 
 ### Data Flow (EventsPage)
-- `GET /api/events/?limit=500` 한 번에 fetch → 클라이언트 필터링/페이지네이션
-- **한계**: 최신 500건만 조회 가능. 데모 단계이므로 유지. 실데이터 붙는 시점에 서버사이드 페이지네이션으로 전환 예정 (백엔드에 `skip`/`limit` + `total` 응답 추가 필요)
+- `src/hooks/useEventsPage.ts` 단일 훅이 데이터·필터·페이지네이션 모두 담당
+- **서버사이드 필터**: `status`, `type`, `camera_id`, `date_from`/`date_to` → 백엔드 전송
+- **서버사이드 페이지네이션**: `offset=(page-1)*pageSize`, `limit=pageSize+1` (hasNextPage 감지)
+- **클라이언트 필터**: `search`, `station` → 현재 페이지 내에서만 적용 (백엔드 미지원, 아래 대기 항목 참고)
+- WebSocket `NEW_EVENT` → 현재 필터+페이지 그대로 서버 re-fetch (필터 매칭 보장)
+- CSV 내보내기 → 클릭 시 `limit=10000`으로 전체 재조회 후 export
 
 ### Component Organization
 - `src/components/layout/` — `Sidebar`, `Header`
 - `src/components/dashboard/` — `StatCards`, `StatCard`, `AlertList`, `AlertItem`, `CameraStats`, `FalseAlarmList`, `EventDetailModal`, `FalseAlarmModal`
-  - `EventDetailModal` — 단일 이벤트 상세. FalseAlarmModal을 내부에서 직접 렌더링. 처리완료/오탐신고 완료 시 버튼 → 완료 문구로 전환 (서버 `handled_at` 재조회)
-  - `FalseAlarmModal` — `onSubmitted(reason: string)` 콜백으로 reason 전달. AlertItem 경유 시 DashboardPage가 렌더링, EventDetailModal 경유 시 EventDetailModal이 내부 렌더링
+  - `EventDetailModal` — 단일 이벤트 상세. FalseAlarmModal을 내부에서 직접 렌더링. 처리완료/오탐신고 완료 시 버튼 → 완료 문구로 전환 (서버 `handled_at` 재조회). 오탐신고 완료 시 reason도 completedInfo에 저장 후 표시
+  - `FalseAlarmModal` — `onSubmitted(reason: string)` 콜백으로 reason 전달. EventDetailModal 경유 시 reason 활용, DashboardPage(AlertItem) 경유 시 `() => refresh()`로 reason은 버림
+  - `EventInfoPanel` — 이벤트 상세 패널. `event_type`은 `labelEventType()`으로 한글 변환 후 표시
 - `src/components/events/` — `EventsFilter`, `EventsTable`, `EventsPagination`
+  - `EventsTable` — `onExport: () => Promise<EventResponse[]>` 콜백으로 전체 export 지원
+  - `EventsPagination` — `hasNextPage` 기반 이전/다음 방식 (서버가 total 미반환)
 - `src/components/stats/` — `StatSummaryCards`, `DailyTrendChart`, `EventTypeChart`, `HourlyDistributionChart`, `FalseAlarmTable`, `CameraRankingTable`
 - `src/components/ui/` — shadcn/ui primitives (generated via `npx shadcn add <component>`)
+- `src/constants/eventTypes.ts` — `EVENT_TYPE_LABEL` (영문→한글 맵), `EVENT_TYPE_OPTIONS` (필터 드롭다운용), `labelEventType(raw)` 함수
 - `src/contexts/AppContext.tsx` — 전역 상태 (`wsConnected`, `unconfirmedCount`) — Header·Sidebar에서 읽고 DashboardPage·EventsPage에서 설정
-- `src/hooks/` — `useWebSocket` (auto-reconnect, 3s delay, `connected` 반환, per-effect `let active` 패턴)
+- `src/hooks/` — `useWebSocket` (auto-reconnect, 3s delay, `connected` 반환, per-effect `let active` 패턴), `useEventsPage` (EventsPage 전용 통합 훅)
 - `src/api/` — `axios.ts` (singleton), `events.ts`, `cameras.ts`, `notifications.ts`
 - `src/types/index.ts` — 앱 전체 공유 타입 (`EventResponse`, `EventStats`, `CameraEventStats`, `NotificationResponse`)
 
@@ -83,42 +92,41 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 - Run the full stack with `docker-compose up -d` from the repo root (`/Users/ijihyeon/Desktop/GateGuard/`)
 - 상세 API 문서: `API.md` 참고
 
-### 구현된 API 전체 목록 (Swagger 확인 완료)
+### 구현된 API 전체 목록
 
 **auth**
 - `POST /api/auth/login` — JWT 로그인 ✅ 프론트 연동
-- `POST /api/auth/register` — 회원가입 (프론트 미사용)
-- `POST /api/auth/find-pw` — 비밀번호 찾기 (프론트 미사용)
+- `POST /api/auth/register` — 회원가입 ✅ 프론트 연동 (LoginPage register step)
+- `POST /api/auth/find-pw` — 비밀번호 찾기 ✅ 프론트 연동 (query params: `employee_id`, `email`)
 
 **cameras**
 - `GET /api/cameras/` — 카메라 목록 ✅ 프론트 연동
-- `POST /api/cameras/` — 카메라 등록 (프론트 미사용)
-- `PATCH /api/cameras/{camera_id}/toggle` — 카메라 활성화/비활성화 (프론트 미사용)
+- `POST /api/cameras/` — 카메라 등록 ✅ 프론트 연동 (SettingsPage)
+- `PATCH /api/cameras/{camera_id}/toggle` — 카메라 활성화/비활성화 ✅ 프론트 연동 (SettingsPage)
 
 **events**
-- `GET /api/events/` — 이벤트 목록 ✅ 프론트 연동
+- `GET /api/events/` — 이벤트 목록 ✅ 프론트 연동 (params: `status`, `type`, `camera_id`, `date_from`, `date_to`, `limit`, `offset`)
 - `GET /api/events/stats` — 통계 카드 ✅ 프론트 연동
 - `GET /api/events/stats/by-camera` — 구간별 알림현황 ✅ 프론트 연동
 - `GET /api/events/{event_id}` — 이벤트 단건 조회 ✅ 프론트 연동
 - `PATCH /api/events/{event_id}/status` — 이벤트 상태 변경 ✅ 프론트 연동
-- `POST /api/events/{event_id}/false-alarm` — 오탐신고 ✅ 프론트 연동
+- `POST /api/events/{event_id}/false-alarm` — 오탐신고 ✅ 프론트 연동 (body: `{ reason: string }`)
 
 **notifications**
-- `GET /api/notifications/` — 알림 목록 ✅ 프론트 연동 (인증 불필요)
+- `GET /api/notifications/` — 알림 목록 ✅ 프론트 연동
 - `PATCH /api/notifications/{notification_id}/read` — 읽음 처리 ✅ 프론트 연동
 - `POST /api/notifications/read-all` — 전체 읽음 처리 (프론트 미사용)
 
-### GET /api/events/ 실제 응답 필드 (Swagger + curl 확인)
+### GET /api/events/ 응답 필드
 ```ts
 {
   id, camera_id, timestamp, clip_url, track_id,
-  confidence, status, handled_by, handled_at
+  confidence, status, event_type, reason,
+  handled_by, handled_at
 }
 ```
-- `event_type`: DB에 저장되나 API 응답에 미포함 → 백엔드 추가 요청 필요
-- `reason`: DB/API 모두 없음 → 백엔드 추가 요청 필요 (false_alarm 이벤트에만 포함)
 
-### GET /api/events/stats 실제 응답 필드 (curl 확인)
+### GET /api/events/stats 응답 필드
 ```ts
 { today_total, pending, confirmed, false_alarm }
 ```
@@ -128,41 +136,48 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 - `pending` → 상세보기·오탐신고 버튼 활성화, 빨간 dot 표시
 - `confirmed` / `false_alarm` → 버튼 없음, 완료 문구만 표시
 
+### AI 이벤트 타입 값 (inference.py 출력 → event_type 필드)
+AI가 내보내는 `events[].name` 값이 그대로 `event_type`으로 저장됨.
+프론트 `EVENT_TYPE_LABEL` 매핑: `tailgating | jump | crawling | unpaid | emergencydoor | normal | unknown`
+
 ## 구현 현황
 
 ### ✅ 완료
 - 로그인 페이지 (JWT 인증, remember me)
+- 회원가입 / 비밀번호 찾기 (LoginPage — `step: "login" | "register" | "findpw"` 멀티스텝 폼, API 연동)
 - axios 공통 인스턴스 (토큰 자동 주입, 401 리다이렉트)
 - WebSocket 훅 (`useWebSocket`) — 자동 재연결
 - 공통 TypeScript 타입 (`src/types/index.ts`)
 - API 모듈 (`events.ts`, `cameras.ts`, `notifications.ts`)
 - Sidebar + Header 레이아웃
 - DashboardPage 전체 (API 연동, WebSocket, 4개 위젯, 2개 모달)
-  - CameraStats — 역별 알림현황 (건수 내림차순, 최대 5개, WebSocket 실시간 순위 변동)
+  - CameraStats — 역별 알림현황 (건수 내림차순, 최대 5개, WebSocket 실시간 낙관적 업데이트)
   - EventDetailModal — 영상 + 상세정보 패널. 역무원파견(confirm→비활성화)/처리완료(confirm→PATCH)/오탐신고(FalseAlarmModal 내장). 처리 후 서버 `handled_at` 재조회 후 완료 문구 표시
-  - FalseAlarmModal — `onSubmitted(reason)` 으로 reason 반환. EventDetailModal 내부 렌더링 (AlertItem 직접 접근 시 DashboardPage 렌더링)
+  - FalseAlarmModal — `onSubmitted(reason)` 으로 reason 반환
   - WebSocket NEW_EVENT 시 stats + cameraStats 낙관적 업데이트
-- EventsPage (전체 발생내역 — 필터/클라이언트 페이지네이션, WebSocket 실시간 삽입)
-- StatsPage (ECharts 통계 시각화)
+- EventsPage (전체 발생내역)
+  - 서버사이드 필터: status, type, camera_id, 기간(date_from/date_to)
+  - 서버사이드 페이지네이션: offset+limit, hasNextPage 방식
+  - 클라이언트 필터: search, station (현재 페이지 내)
+  - WebSocket NEW_EVENT → 현재 필터+페이지 re-fetch
+  - CSV 내보내기 → limit=10000 전체 재조회 후 export
+  - EventDetailModal 재사용
+- StatsPage (ECharts 통계 시각화) — 전 차트 실데이터
   - StatSummaryCards — 총발생/일평균/오탐율/평균처리시간 4개 카드
   - DailyTrendChart — 최근 12일 라인 차트
-  - EventTypeChart — 감지 유형 비율 도넛 차트 (event_type 필드 백엔드 추가 시 실데이터)
+  - EventTypeChart — 감지 유형 비율 도넛 차트 (event_type 실데이터)
   - HourlyDistributionChart — 시간대별 발생 분포 가로 바 차트
-  - FalseAlarmTable — 오탐 사유별 건수 (reason 필드 백엔드 추가 시 실데이터)
+  - FalseAlarmTable — 오탐 사유별 건수 (reason 실데이터)
   - CameraRankingTable — 역별/게이트별 발생 순위
+- SettingsPage (내 프로필 탭: JWT 디코딩으로 사원번호 표시 + 로그아웃 / 카메라 관리 탭: 목록 조회 + 등록 폼 + 활성화 토글)
+- Auth route guard (`src/router/index.tsx` — `PrivateRoute` 컴포넌트)
+- Header 아바타 JWT 연동 (localStorage/sessionStorage 토큰에서 `employee_id` 디코딩, 첫 글자 표시)
 - AppContext (`wsConnected`, `unconfirmedCount` 전역 공유)
+- `src/constants/eventTypes.ts` (감지 유형 한글 레이블, 필터 옵션)
 - API 문서 (`API.md`)
 
 ### ⚠️ 미구현
-1. **Auth route guard** — 토큰 없으면 `/`로 리다이렉트 (백엔드 켜진 상태에서는 401로 사실상 동작)
-2. **SettingsPage** — 설정 기능 (현재 placeholder)
-3. **역무원 파견** — confirm 후 버튼 비활성화까지만 구현. 백엔드 API 없어서 실제 파견 처리 불가. 모달 닫고 재열면 파견 상태 리셋됨 (로컬 state)
-4. **FalseAlarmList 항목 클릭** — 클릭 시 상세 모달 미연결 (`NotificationResponse`에 `event` embed 백엔드 확인 필요)
-5. **회원가입 / 비밀번호 찾기** — `LoginPage` 버튼 UI만 존재
-6. **지도보기** — `CameraStats` 버튼 핸들러 없음
-7. **Header 아바타** — "관" 하드코딩, 로그인 유저 정보 연동 필요
+1. **역무원 파견** — confirm 후 버튼 비활성화(`dispatched` 로컬 state)까지만 구현. 백엔드 API 없어서 실제 파견 처리 불가. 모달 닫고 재열면 파견 상태 리셋됨
 
-### 백엔드에 추가 요청 필요한 항목
-- `GET /api/events/` 응답에 `event_type: string` 추가 → 감지 유형 파이 차트 실데이터
-- `GET /api/events/` 응답에 `reason: string | null` 추가 → 오탐신고 현황 실데이터 (`false_alarm`일 때만 값, 나머지 `null`)
-- 서버사이드 페이지네이션: `skip` 파라미터 + 응답에 `total` 포함 → EventsPage 500건 제한 해소 (데모 이후)
+### 백엔드 추가 요청 대기 중
+- `GET /api/events/`에 `search: Optional[str]` 파라미터 추가 → 완료되면 `useEventsPage.ts`의 `doFetch`에 `search` 파라미터 추가하고 `EventsFilter`의 search를 서버사이드로 전환. `station` 드롭다운도 동일하게 처리 가능

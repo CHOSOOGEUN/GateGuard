@@ -1,14 +1,3 @@
-/**
- * @file components/dashboard/FalseAlarmModal.tsx
- * @description 오탐신고 모달 컴포넌트
- *
- * ## 기능
- * - 오탐 사유 4가지 라디오 선택 (기타 선택 시 직접 입력)
- * - POST /api/events/{id}/false-alarm { reason, memo? } 호출 후 닫기
- * - EventDetailModal 내부에서 렌더링 (DashboardPage의 AlertItem 경유 시 DashboardPage가 직접 렌더링)
- * - 제출 완료 시 onSubmitted(reason) 콜백으로 reason 전달
- */
-
 import { useState } from "react";
 import { X } from "lucide-react";
 import type { EventResponse } from "@/types";
@@ -54,10 +43,7 @@ export default function FalseAlarmModal({
     setLoading(true);
     try {
       const reason = selectedReason === "기타" ? memo.trim() : selectedReason;
-      await reportFalseAlarm(event.id, {
-        reason,
-        memo: selectedReason === "기타" ? memo.trim() : undefined,
-      });
+      await reportFalseAlarm(event.id, { reason });
       onSubmitted(reason);
       onClose();
     } catch {

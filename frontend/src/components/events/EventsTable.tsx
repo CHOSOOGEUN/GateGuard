@@ -1,38 +1,13 @@
-/**
- * @file components/events/EventsTable.tsx
- * @description 전체 발생내역 테이블 컴포넌트
- *
- * ## 기능
- * - 10개 컬럼 테이블: #, 발생시각, 역/게이트, 감지유형, 심각도, 인상착의, 카메라, 상태, 담당자, 대응
- * - 심각도 3단계: confidence ≥ 0.7 → 고위험(빨강) / ≥ 0.4 → 중간(노랑) / < 0.4 → 낮음(초록)
- * - 대응 컬럼: pending → "상세" 버튼 / confirmed → "기록" 버튼 / false_alarm → "기록" 버튼 + "오탐" 텍스트
- * - 액셀 내보내기: 필터링된 이벤트 전체를 UTF-8 BOM CSV로 다운로드 (엑셀 한글 정상 표시)
- * - loading 시 스켈레톤 / 빈 배열 시 안내 문구
- *
- * ## 주의사항
- * - 감지유형: event_type 필드 우선, 없으면 description fallback
- * - 담당자: assigned_to 필드 우선, 없으면 "—" 표시
- * - 액셀 내보내기는 현재 페이지가 아닌 필터링된 전체 데이터 기준
- *
- * ## TODO
- * - [ ] event_type, assigned_to 필드 백엔드 확정 후 수정
- * - [ ] .xlsx 포맷 필요 시 xlsx 라이브러리 설치 (npm install xlsx)
- *
- * ## 협의
- * - 감지유형 enum 값 목록 백엔드(조수근) 확정 필요
- */
-
+import { useState } from "react";
 import { Download } from "lucide-react";
 import type { EventResponse } from "@/types";
 import { labelEventType } from "@/constants/eventTypes";
 
 interface EventsTableProps {
-  /** 현재 페이지에 표시할 이벤트 (페이지네이션 적용 후) */
   events: EventResponse[];
-  /** 액셀 내보내기 대상: 필터링된 전체 이벤트 */
-  allFilteredEvents: EventResponse[];
   loading?: boolean;
   onDetail: (event: EventResponse) => void;
+  onExport: () => Promise<EventResponse[]>;
 }
 
 // ── 유틸 ──────────────────────────────────────────────
@@ -119,10 +94,21 @@ const COLUMNS: { label: string; cls?: string }[] = [
 
 export default function EventsTable({
   events,
-  allFilteredEvents,
   loading,
   onDetail,
+  onExport,
 }: EventsTableProps) {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const all = await onExport();
+      exportToCSV(all);
+    } finally {
+      setExporting(false);
+    }
+  };
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-3">
@@ -265,17 +251,16 @@ export default function EventsTable({
       </div>
 
       {/* 액셀 내보내기 */}
-      {allFilteredEvents.length > 0 && (
-        <div className="flex justify-end px-5 py-3 border-t border-gray-50 dark:border-gray-700">
-          <button
-            onClick={() => exportToCSV(allFilteredEvents)}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-          >
-            액셀 내보내기
-            <Download className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <div className="flex justify-end px-5 py-3 border-t border-gray-50 dark:border-gray-700">
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition disabled:opacity-40"
+        >
+          {exporting ? "내보내는 중..." : "액셀 내보내기"}
+          <Download className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

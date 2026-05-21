@@ -1,15 +1,3 @@
-/**
- * @file types/index.ts
- * @description 앱 전체 공유 TypeScript 인터페이스 정의
- *
- * ## 주의사항
- * - description, appearance_tags 는 백엔드 응답에 포함 시 자동 활용, 없으면 fallback 처리
- * - camera, event 필드는 백엔드 embed 여부에 따라 활용
- *
- * ## 백엔드 확정 후 수정 필요
- * - description, appearance_tags 필드 포함 여부 확인 필요 (현재 optional로 선언, 없으면 fallback 처리)
- */
-
 export interface CameraResponse {
   id: number;
   location: string;

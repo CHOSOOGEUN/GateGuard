@@ -1,17 +1,3 @@
-/**
- * @file axios.ts
- * @description axios 공통 인스턴스
- *
- * ## 기능
- * - 모든 요청에 Bearer 토큰 자동 주입 (localStorage → sessionStorage 순으로 탐색)
- * - 401 응답 시 토큰 삭제 후 로그인(/)으로 리다이렉트
- *
- * ## 주의사항
- * - 모든 API 호출은 기본 axios 대신 이 인스턴스(api) 사용할 것
- * - 토큰 저장/삭제는 이 파일과 LoginPage.tsx에서만 처리할 것
- * - baseURL은 VITE_API_BASE_URL 환경변수로 관리 (.env 파일 참고)
- */
-
 import axios from "axios";
 
 const api = axios.create({
@@ -21,7 +7,6 @@ const api = axios.create({
   },
 });
 
-// 요청할 때마다 토큰 자동으로 헤더에 추가
 api.interceptors.request.use((config) => {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -31,12 +16,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 토큰 만료(401) 시 로그인 페이지로 이동 (로그인 요청 자체는 제외)
+// auth 엔드포인트 제외하고 401이면 토큰 삭제 후 로그인으로 리다이렉트
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isLoginRequest = error.config?.url?.includes("/auth/login");
-    if (error.response?.status === 401 && !isLoginRequest) {
+    const isAuthRoute = error.config?.url?.includes("/api/auth/");
+    if (error.response?.status === 401 && !isAuthRoute) {
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
       window.location.href = "/";
