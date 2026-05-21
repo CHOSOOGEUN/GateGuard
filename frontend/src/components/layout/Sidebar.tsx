@@ -4,7 +4,6 @@ import {
   BarChart2,
   List,
   Settings,
-  Shield,
 } from "lucide-react";
 import { useAppContext } from "@/hooks/useAppContext";
 
@@ -22,9 +21,7 @@ export default function Sidebar() {
     <aside className="w-16 lg:w-64 min-h-screen bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 flex flex-col shrink-0">
       {/* 로고 */}
       <div className="flex items-center justify-center lg:justify-start gap-3 px-0 lg:px-6 py-6 border-b border-gray-100 dark:border-gray-700">
-        <div className="w-10 h-10 rounded-xl bg-[#4B73F7] flex items-center justify-center shrink-0">
-          <Shield className="w-5 h-5 text-white" />
-        </div>
+        <img src="/logo.png" alt="GateGuard" className="w-10 h-10 rounded-xl shrink-0 object-contain" />
         <span className="hidden lg:block font-bold text-gray-900 dark:text-white text-lg">GateGuard</span>
       </div>
 
