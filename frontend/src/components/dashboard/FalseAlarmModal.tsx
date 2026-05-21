@@ -43,10 +43,7 @@ export default function FalseAlarmModal({
     setLoading(true);
     try {
       const reason = selectedReason === "기타" ? memo.trim() : selectedReason;
-      await reportFalseAlarm(event.id, {
-        reason,
-        memo: selectedReason === "기타" ? memo.trim() : undefined,
-      });
+      await reportFalseAlarm(event.id, { reason });
       onSubmitted(reason);
       onClose();
     } catch {

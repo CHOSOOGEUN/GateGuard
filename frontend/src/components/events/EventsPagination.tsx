@@ -1,107 +1,56 @@
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 interface EventsPaginationProps {
-  total: number;
-  page: number; // 1-based
+  page: number;
   pageSize: number;
+  hasNextPage: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }
 
 const PAGE_SIZE_OPTIONS = [8, 16, 32];
 
-function getPageNumbers(page: number, totalPages: number): (number | "...")[] {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-
-  const delta = 2;
-  const left = Math.max(2, page - delta);
-  const right = Math.min(totalPages - 1, page + delta);
-  const middle: number[] = [];
-  for (let i = left; i <= right; i++) middle.push(i);
-
-  const result: (number | "...")[] = [1];
-  if (left > 2) result.push("...");
-  result.push(...middle);
-  if (right < totalPages - 1) result.push("...");
-  if (totalPages > 1) result.push(totalPages);
-  return result;
-}
-
 export default function EventsPagination({
-  total,
   page,
   pageSize,
+  hasNextPage,
   onPageChange,
   onPageSizeChange,
 }: EventsPaginationProps) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const endItem = Math.min(page * pageSize, total);
-  const pageNumbers = getPageNumbers(page, totalPages);
-
   return (
     <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between py-1">
-      {/* 좌측: 건수 표시 */}
       <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-        총 {total}건 중 {startItem}-{endItem} 표시
+        {page}페이지
       </p>
 
-      {/* 중앙: 페이지 버튼 */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition text-gray-600 dark:text-gray-400"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="sr-only">이전</span>
+          이전
         </button>
-
-        {pageNumbers.map((p, i) =>
-          p === "..." ? (
-            <span
-              key={`ellipsis-${i}`}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 text-sm"
-            >
-              ...
-            </span>
-          ) : (
-            <button
-              key={p}
-              onClick={() => onPageChange(p as number)}
-              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition ${
-                p === page
-                  ? "bg-[#4B73F7] text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
-            >
-              {p}
-            </button>
-          ),
-        )}
-
+        <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#4B73F7] text-white text-sm font-medium">
+          {page}
+        </span>
         <button
           onClick={() => onPageChange(page + 1)}
-          disabled={page === totalPages}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition text-gray-600 dark:text-gray-400"
+          disabled={!hasNextPage}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
         >
+          다음
           <ChevronRight className="w-4 h-4" />
-          <span className="sr-only">다음</span>
         </button>
       </div>
 
-      {/* 우측: 페이지당 건수 */}
       <div className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
         <span>페이지당</span>
         <div className="relative">
           <select
             value={pageSize}
-            onChange={(e) => {
-              onPageSizeChange(Number(e.target.value));
-              onPageChange(1);
-            }}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
             className="appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg pl-3 pr-6 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B73F7] cursor-pointer"
           >
             {PAGE_SIZE_OPTIONS.map((s) => (

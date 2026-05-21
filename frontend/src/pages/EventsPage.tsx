@@ -6,19 +6,25 @@ import EventsTable from "@/components/events/EventsTable";
 import EventsPagination from "@/components/events/EventsPagination";
 import EventDetailModal from "@/components/dashboard/EventDetailModal";
 import { useAppContext } from "@/hooks/useAppContext";
-import { useEventsData } from "@/hooks/useEventsData";
-import { useEventsFilter } from "@/hooks/useEventsFilter";
+import { useEventsPage } from "@/hooks/useEventsPage";
 import type { EventResponse } from "@/types";
 
 export default function EventsPage() {
   const { setWsConnected } = useAppContext();
-  const { allEvents, loading, fetchAll } = useEventsData(setWsConnected);
   const {
-    filters, handleFiltersChange,
-    filteredEvents, paginatedEvents,
-    cameraOptions, stationOptions,
-    page, setPage, pageSize, setPageSize,
-  } = useEventsFilter(allEvents);
+    filters,
+    handleFiltersChange,
+    displayEvents,
+    loading,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    hasNextPage,
+    cameraOptions,
+    stationOptions,
+    refetch,
+  } = useEventsPage(setWsConnected);
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
 
   return (
@@ -34,21 +40,18 @@ export default function EventsPage() {
             stationOptions={stationOptions}
           />
           <EventsTable
-            events={paginatedEvents}
-            allFilteredEvents={filteredEvents}
+            events={displayEvents}
+            allFilteredEvents={displayEvents}
             loading={loading}
             onDetail={setSelectedEvent}
           />
           {!loading && (
             <EventsPagination
-              total={filteredEvents.length}
               page={page}
               pageSize={pageSize}
+              hasNextPage={hasNextPage}
               onPageChange={setPage}
-              onPageSizeChange={(size) => {
-                setPageSize(size);
-                setPage(1);
-              }}
+              onPageSizeChange={setPageSize}
             />
           )}
         </main>
@@ -58,7 +61,7 @@ export default function EventsPage() {
         <EventDetailModal
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
-          onConfirmed={fetchAll}
+          onConfirmed={refetch}
         />
       )}
     </div>

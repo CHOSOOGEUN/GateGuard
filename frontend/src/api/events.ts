@@ -3,8 +3,12 @@ import type { EventResponse, EventStats, CameraEventStats } from "@/types";
 
 export const getEvents = (params?: {
   limit?: number;
+  offset?: number;
   status?: string;
   camera_id?: number;
+  type?: string;
+  date_from?: string;
+  date_to?: string;
 }) => api.get<EventResponse[]>("/api/events/", { params }).then((r) => r.data);
 
 export const getEventById = (id: number) =>
@@ -21,7 +25,5 @@ export const getEventStatsByCamera = () =>
 export const updateEventStatus = (id: number, status: string) =>
   api.patch(`/api/events/${id}/status`, { status }).then((r) => r.data);
 
-export const reportFalseAlarm = (
-  id: number,
-  body: { reason: string; memo?: string },
-) => api.post(`/api/events/${id}/false-alarm`, body).then((r) => r.data);
+export const reportFalseAlarm = (id: number, body: { reason: string }) =>
+  api.post(`/api/events/${id}/false-alarm`, body).then((r) => r.data);
