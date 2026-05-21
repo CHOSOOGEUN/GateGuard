@@ -9,6 +9,7 @@ export const getEvents = (params?: {
   type?: string;
   date_from?: string;
   date_to?: string;
+  search?: string;
 }) => api.get<EventResponse[]>("/api/events/", { params }).then((r) => r.data);
 
 export const getEventById = (id: number) =>

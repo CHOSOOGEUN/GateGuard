@@ -58,6 +58,7 @@ export function useEventsPage(setWsConnected: (v: boolean) => void) {
       ...(f.cameraId ? { camera_id: Number(f.cameraId) } : {}),
       ...(date_from ? { date_from } : {}),
       ...(date_to ? { date_to } : {}),
+      ...(f.search ? { search: f.search } : {}),
     };
     try {
       const result = await getEvents(params);
@@ -87,28 +88,14 @@ export function useEventsPage(setWsConnected: (v: boolean) => void) {
     setPage(1);
   }, []);
 
-  // search · station 은 서버 파라미터가 없으므로 현재 페이지 내에서 클라이언트 필터
+  // station 은 서버 파라미터가 없으므로 현재 페이지 내에서 클라이언트 필터
+  // search 는 서버사이드로 처리됨
   const displayEvents = useMemo(() => {
-    if (!filters.search && !filters.station) return rawEvents;
-    return rawEvents.filter((e) => {
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        const eventId = `ev-${String(e.id).padStart(4, "0")}`;
-        const station = (e.camera?.station_name ?? "").toLowerCase();
-        const gate = (e.camera?.location ?? "").toLowerCase();
-        const camLabel = `cam-${String(e.camera_id).padStart(2, "0")}`;
-        if (
-          !eventId.includes(q) &&
-          !station.includes(q) &&
-          !gate.includes(q) &&
-          !camLabel.includes(q)
-        )
-          return false;
-      }
-      if (filters.station && e.camera?.station_name !== filters.station) return false;
-      return true;
-    });
-  }, [rawEvents, filters.search, filters.station]);
+    if (!filters.station) return rawEvents;
+    return rawEvents.filter(
+      (e) => e.camera?.station_name === filters.station
+    );
+  }, [rawEvents, filters.station]);
 
   const cameraOptions = useMemo(
     () =>
@@ -134,6 +121,7 @@ export function useEventsPage(setWsConnected: (v: boolean) => void) {
       ...(filters.cameraId ? { camera_id: Number(filters.cameraId) } : {}),
       ...(date_from ? { date_from } : {}),
       ...(date_to ? { date_to } : {}),
+      ...(filters.search ? { search: filters.search } : {}),
     };
     const result = await getEvents(params);
     return result.map((e) => ({
