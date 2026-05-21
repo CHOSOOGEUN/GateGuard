@@ -1,14 +1,13 @@
+import { useState } from "react";
 import { Download } from "lucide-react";
 import type { EventResponse } from "@/types";
 import { labelEventType } from "@/constants/eventTypes";
 
 interface EventsTableProps {
-  /** 현재 페이지에 표시할 이벤트 (페이지네이션 적용 후) */
   events: EventResponse[];
-  /** 액셀 내보내기 대상: 필터링된 전체 이벤트 */
-  allFilteredEvents: EventResponse[];
   loading?: boolean;
   onDetail: (event: EventResponse) => void;
+  onExport: () => Promise<EventResponse[]>;
 }
 
 // ── 유틸 ──────────────────────────────────────────────
@@ -95,10 +94,21 @@ const COLUMNS: { label: string; cls?: string }[] = [
 
 export default function EventsTable({
   events,
-  allFilteredEvents,
   loading,
   onDetail,
+  onExport,
 }: EventsTableProps) {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const all = await onExport();
+      exportToCSV(all);
+    } finally {
+      setExporting(false);
+    }
+  };
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 space-y-3">
@@ -241,17 +251,16 @@ export default function EventsTable({
       </div>
 
       {/* 액셀 내보내기 */}
-      {allFilteredEvents.length > 0 && (
-        <div className="flex justify-end px-5 py-3 border-t border-gray-50 dark:border-gray-700">
-          <button
-            onClick={() => exportToCSV(allFilteredEvents)}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-          >
-            액셀 내보내기
-            <Download className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <div className="flex justify-end px-5 py-3 border-t border-gray-50 dark:border-gray-700">
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition disabled:opacity-40"
+        >
+          {exporting ? "내보내는 중..." : "액셀 내보내기"}
+          <Download className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

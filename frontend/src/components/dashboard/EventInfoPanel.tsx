@@ -1,5 +1,6 @@
 import { X, Clock, MapPin, Zap } from "lucide-react";
 import type { EventResponse } from "@/types";
+import { labelEventType } from "@/constants/eventTypes";
 
 export interface CompletedInfo {
   type: "confirmed" | "false_alarm";
@@ -87,7 +88,7 @@ export default function EventInfoPanel({
             <Zap className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
             <div>
               <p className="text-xs text-gray-400 mb-0.5">감지유형</p>
-              <p className="font-medium">{event.event_type}</p>
+              <p className="font-medium">{labelEventType(event.event_type!)}</p>
             </div>
           </div>
         )}

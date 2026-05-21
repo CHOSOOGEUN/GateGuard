@@ -24,6 +24,7 @@ export default function EventsPage() {
     cameraOptions,
     stationOptions,
     refetch,
+    exportAll,
   } = useEventsPage(setWsConnected);
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
 
@@ -41,9 +42,9 @@ export default function EventsPage() {
           />
           <EventsTable
             events={displayEvents}
-            allFilteredEvents={displayEvents}
             loading={loading}
             onDetail={setSelectedEvent}
+            onExport={exportAll}
           />
           {!loading && (
             <EventsPagination

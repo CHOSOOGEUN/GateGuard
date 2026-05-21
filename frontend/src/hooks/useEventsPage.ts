@@ -124,16 +124,27 @@ export function useEventsPage(setWsConnected: (v: boolean) => void) {
     [cameras]
   );
 
+  const exportAll = useCallback(async (): Promise<EventResponse[]> => {
+    const { date_from, date_to } = periodToDates(filters.period);
+    const params: Parameters<typeof getEvents>[0] = {
+      limit: 10000,
+      offset: 0,
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.type ? { type: filters.type } : {}),
+      ...(filters.cameraId ? { camera_id: Number(filters.cameraId) } : {}),
+      ...(date_from ? { date_from } : {}),
+      ...(date_to ? { date_to } : {}),
+    };
+    const result = await getEvents(params);
+    return result.map((e) => ({
+      ...e,
+      camera: cameraMapRef.current.get(e.camera_id) ?? e.camera,
+    }));
+  }, [filters]);
+
   const { connected } = useWebSocket((msg) => {
-    if (msg.type === "NEW_EVENT" && page === 1) {
-      const newEvent = msg.data as EventResponse;
-      setRawEvents((prev) => [
-        {
-          ...newEvent,
-          camera: cameraMapRef.current.get(newEvent.camera_id) ?? newEvent.camera,
-        },
-        ...prev.slice(0, pageSize - 1),
-      ]);
+    if (msg.type === "NEW_EVENT") {
+      doFetch(filters, page, pageSize);
     }
   });
 
@@ -154,5 +165,6 @@ export function useEventsPage(setWsConnected: (v: boolean) => void) {
     cameraOptions,
     stationOptions,
     refetch: () => doFetch(filters, page, pageSize),
+    exportAll,
   };
 }
