@@ -1,6 +1,5 @@
 import { AlertTriangle } from "lucide-react";
 import type { EventResponse } from "@/types";
-import { labelEventType } from "@/constants/eventTypes";
 
 interface FalseAlarmListProps {
   events: EventResponse[];
@@ -21,8 +20,8 @@ function getLabel(e: EventResponse): string {
   const station = e.camera?.station_name;
   const gate = e.camera?.location;
   const location = station && gate ? `${station} ${gate}` : station ?? `카메라 #${e.camera_id}`;
-  const type = labelEventType(e.event_type ?? "");
-  return `${location} — ${type}`;
+  const reason = e.reason ?? "기타";
+  return `${location} — ${reason}`;
 }
 
 export default function FalseAlarmList({ events, loading }: FalseAlarmListProps) {

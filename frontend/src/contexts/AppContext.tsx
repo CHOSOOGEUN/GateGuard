@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { AppContext } from "./appContextDef";
@@ -6,12 +6,18 @@ import type { WsEventListener } from "./appContextDef";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import type { EventResponse } from "@/types";
 import { normalizeEvent } from "@/api/transform";
+import { getEventStats } from "@/api/events";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [unconfirmedCount, setUnconfirmedCount] = useState(0);
   const [loggedIn, setLoggedIn] = useState(
     () => !!(localStorage.getItem("token") || sessionStorage.getItem("token")),
   );
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    getEventStats().then((stats) => setUnconfirmedCount(stats.pending)).catch(() => {});
+  }, [loggedIn]);
   const listenersRef = useRef<Set<WsEventListener>>(new Set());
 
   const subscribeWsEvent = useCallback((cb: WsEventListener) => {

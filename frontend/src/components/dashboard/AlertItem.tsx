@@ -1,4 +1,5 @@
 import type { EventResponse } from "@/types";
+import { labelEventType } from "@/constants/eventTypes";
 
 interface AlertItemProps {
   event: EventResponse;
@@ -34,11 +35,10 @@ function getLocationLabel(event: EventResponse): string {
   return `CAM-${String(event.camera_id).padStart(2, "0")}`;
 }
 
-/** description 있으면 그 값, 없으면 status 기반 기본 문구 */
 function getDescription(event: EventResponse): string {
-  if (event.description) return event.description;
   if (event.status === "confirmed") return "무임승차 확인 처리됨";
   if (event.status === "false_alarm") return "오탐으로 신고됨";
+  if (event.event_type) return `${labelEventType(event.event_type)} 의심`;
   return "무임승차 의심 감지";
 }
 
