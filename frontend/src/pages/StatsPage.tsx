@@ -111,9 +111,9 @@ export default function StatsPage() {
 
           {/* 일별 추이 + 감지 유형 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl p-5">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   일별 발생 추이
                 </span>
                 <span className="text-xs text-gray-400">
@@ -121,21 +121,21 @@ export default function StatsPage() {
                 </span>
               </div>
               {loading ? (
-                <div className="h-[200px] animate-pulse bg-gray-100 rounded-xl" />
+                <div className="h-[200px] animate-pulse bg-gray-100 dark:bg-gray-700 rounded-xl" />
               ) : (
                 <DailyTrendChart data={dailyData} />
               )}
             </div>
 
-            <div className="bg-white rounded-2xl p-5">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   감지 유형 비율
                 </span>
                 <span className="text-xs text-gray-400">전체 기간</span>
               </div>
               {loading ? (
-                <div className="h-[200px] animate-pulse bg-gray-100 rounded-xl" />
+                <div className="h-[200px] animate-pulse bg-gray-100 dark:bg-gray-700 rounded-xl" />
               ) : (
                 <EventTypeChart data={typeData} />
               )}
@@ -144,23 +144,23 @@ export default function StatsPage() {
 
           {/* 시간대별 분포 + 오탐신고 현황 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl p-5">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   시간대별 발생 분포
                 </span>
                 <span className="text-xs text-gray-400">0시 — 23시</span>
               </div>
               {loading ? (
-                <div className="h-[300px] animate-pulse bg-gray-100 rounded-xl" />
+                <div className="h-[300px] animate-pulse bg-gray-100 dark:bg-gray-700 rounded-xl" />
               ) : (
                 <HourlyDistributionChart data={hourlyData} />
               )}
             </div>
 
-            <div className="bg-white rounded-2xl p-5">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                   오탐신고 현황
                 </span>
               </div>
@@ -169,7 +169,7 @@ export default function StatsPage() {
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
-                      className="h-8 animate-pulse bg-gray-100 rounded"
+                      className="h-8 animate-pulse bg-gray-100 dark:bg-gray-700 rounded"
                     />
                   ))}
                 </div>
@@ -180,9 +180,9 @@ export default function StatsPage() {
           </div>
 
           {/* 역별/게이트별 발생 순위 */}
-          <div className="bg-white rounded-2xl p-5">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                 역별 / 게이트별 발생 순위
               </span>
             </div>
@@ -191,7 +191,7 @@ export default function StatsPage() {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-10 animate-pulse bg-gray-100 rounded"
+                    className="h-10 animate-pulse bg-gray-100 dark:bg-gray-700 rounded"
                   />
                 ))}
               </div>

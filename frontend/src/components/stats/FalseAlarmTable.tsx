@@ -14,16 +14,16 @@ export default function FalseAlarmTable({ data }: Props) {
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-gray-400 text-xs border-b border-gray-100">
+        <tr className="text-gray-400 text-xs border-b border-gray-100 dark:border-gray-700">
           <th className="pb-2 text-left font-medium">오탐사유</th>
           <th className="pb-2 text-right font-medium">건수</th>
         </tr>
       </thead>
       <tbody>
         {rows.map(([reason, count]) => (
-          <tr key={reason} className="border-b border-gray-50 last:border-0">
-            <td className="py-2.5 text-gray-700">{reason}</td>
-            <td className="py-2.5 text-right text-gray-600">{count}건</td>
+          <tr key={reason} className="border-b border-gray-50 dark:border-gray-700 last:border-0">
+            <td className="py-2.5 text-gray-700 dark:text-gray-300">{reason}</td>
+            <td className="py-2.5 text-right text-gray-600 dark:text-gray-400">{count}건</td>
           </tr>
         ))}
       </tbody>

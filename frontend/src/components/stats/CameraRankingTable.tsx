@@ -18,7 +18,7 @@ export default function CameraRankingTable({ data }: Props) {
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-gray-400 text-xs border-b border-gray-100">
+        <tr className="text-gray-400 text-xs border-b border-gray-100 dark:border-gray-700">
           <th className="pb-2 text-left font-medium w-10">순위</th>
           <th className="pb-2 text-left font-medium">역 · 게이트</th>
           <th className="pb-2 text-right font-medium w-16">건수</th>
@@ -30,16 +30,16 @@ export default function CameraRankingTable({ data }: Props) {
           const pct = Math.round((row.count / maxCount) * 100);
           const color = BAR_COLORS[i] ?? "#9ca3af";
           return (
-            <tr key={row.camera_id} className="border-b border-gray-50 last:border-0">
+            <tr key={row.camera_id} className="border-b border-gray-50 dark:border-gray-700 last:border-0">
               <td className="py-3 text-gray-400">{i + 1}</td>
-              <td className="py-3 text-gray-700">
+              <td className="py-3 text-gray-700 dark:text-gray-300">
                 {row.station_name} {row.location}
               </td>
-              <td className="py-3 text-right text-gray-600">{row.count}</td>
+              <td className="py-3 text-right text-gray-600 dark:text-gray-400">{row.count}</td>
               <td className="py-3 pl-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400 w-8">{pct}%</span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                  <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
                     <div
                       className="h-1.5 rounded-full"
                       style={{ width: `${pct}%`, backgroundColor: color }}
