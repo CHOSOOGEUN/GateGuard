@@ -41,8 +41,9 @@ class Event(Base):
     clip_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     track_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    status: Mapped[str] = mapped_column(String, default="pending")  # pending | confirmed | dismissed
-    event_type: Mapped[str] = mapped_column(String, default="unknown")  # tag_fail | jump | emergency_door
+    status: Mapped[str] = mapped_column(String, default="pending")  # pending | confirmed | false_alarm
+    event_type: Mapped[str] = mapped_column(String, default="unknown")  # tailgating | unpaid | jump | crawling | unknown
+    reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # status == "false_alarm" 일 때 오탐 사유
     handled_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("admins.id"), nullable=True)
     handled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 

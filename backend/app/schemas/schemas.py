@@ -45,6 +45,7 @@ class EventCreate(BaseModel):
     clip_url: Optional[str] = None
     track_id: Optional[int] = None
     confidence: Optional[float] = None
+    event_type: Optional[str] = None  # AI 가 분류 결과를 함께 전송 (없으면 모델 default 'unknown')
 
 
 class EventResponse(BaseModel):
@@ -55,6 +56,8 @@ class EventResponse(BaseModel):
     track_id: Optional[int]
     confidence: Optional[float]
     status: str
+    event_type: str
+    reason: Optional[str] = None
     handled_by: Optional[int]
     handled_at: Optional[datetime]
 
@@ -62,7 +65,7 @@ class EventResponse(BaseModel):
 
 
 class EventStatusUpdate(BaseModel):
-    status: Literal["confirmed", "dismissed"]
+    status: Literal["confirmed", "false_alarm"]
 
 
 # ── Notification ──────────────────────────────────────────────────────────────
