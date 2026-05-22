@@ -12,8 +12,8 @@ import type { EventResponse } from "@/types";
 
 export default function DashboardPage() {
   const {
-    events, stats, cameraStats, notifications,
-    loadingEvents, loadingStats, loadingCamera, loadingNotif,
+    events, stats, cameraStats, falseAlarmEvents,
+    loadingEvents, loadingStats, loadingCamera, loadingFalseAlarm,
     unconfirmedCount, refresh,
   } = useDashboardData();
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
@@ -41,7 +41,7 @@ export default function DashboardPage() {
             />
             <div className="w-full lg:w-[340px] shrink-0 space-y-4">
               <CameraStats data={cameraStats} loading={loadingCamera} />
-              <FalseAlarmList notifications={notifications} loading={loadingNotif} />
+              <FalseAlarmList events={falseAlarmEvents} loading={loadingFalseAlarm} />
             </div>
           </div>
         </main>

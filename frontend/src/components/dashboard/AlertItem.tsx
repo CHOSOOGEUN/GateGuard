@@ -11,9 +11,10 @@ function getSeverity(event: EventResponse): { label: string; cls: string } {
     return { label: "처리완료", cls: "bg-gray-100 text-gray-500" };
   if (event.status === "false_alarm")
     return { label: "오탐", cls: "bg-gray-100 text-gray-400" };
-  if ((event.confidence ?? 0) >= 0.7)
-    return { label: "고위험", cls: "bg-red-100 text-red-500" };
-  return { label: "중간", cls: "bg-yellow-100 text-yellow-600" };
+  const conf = event.confidence ?? 0;
+  if (conf >= 0.7) return { label: "고위험", cls: "bg-red-100 text-red-500" };
+  if (conf >= 0.4) return { label: "중간", cls: "bg-yellow-100 text-yellow-600" };
+  return { label: "낮음", cls: "bg-green-100 text-green-600" };
 }
 
 function formatTime(timestamp: string): string {
@@ -37,7 +38,7 @@ function getLocationLabel(event: EventResponse): string {
 function getDescription(event: EventResponse): string {
   if (event.description) return event.description;
   if (event.status === "confirmed") return "무임승차 확인 처리됨";
-  if (event.status === "false_alarm") return "오탐으로 처리됨";
+  if (event.status === "false_alarm") return "오탐으로 신고됨";
   return "무임승차 의심 감지";
 }
 
@@ -73,7 +74,9 @@ export default function AlertItem({
             {formatTime(event.timestamp)}
           </span>
         </div>
-        <p className="text-sm text-gray-700 dark:text-gray-300 mb-1.5">{getDescription(event)}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-1.5">
+          {getDescription(event)}
+        </p>
         <div className="flex gap-1.5 flex-wrap">
           {event.appearance_tags?.map((tag) => (
             <span

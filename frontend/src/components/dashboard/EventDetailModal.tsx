@@ -14,8 +14,10 @@ interface EventDetailModalProps {
 function getSeverityBadge(event: EventResponse): { label: string; cls: string } {
   if (event.status === "confirmed") return { label: "처리완료", cls: "bg-green-100 text-green-600" };
   if (event.status === "false_alarm") return { label: "오탐", cls: "bg-gray-100 text-gray-500" };
-  if ((event.confidence ?? 0) >= 0.7) return { label: "고위험", cls: "bg-red-100 text-red-500" };
-  return { label: "중간", cls: "bg-yellow-100 text-yellow-600" };
+  const conf = event.confidence ?? 0;
+  if (conf >= 0.7) return { label: "고위험", cls: "bg-red-100 text-red-500" };
+  if (conf >= 0.4) return { label: "중간", cls: "bg-yellow-100 text-yellow-600" };
+  return { label: "낮음", cls: "bg-green-100 text-green-600" };
 }
 
 export default function EventDetailModal({
@@ -26,7 +28,13 @@ export default function EventDetailModal({
   const [dispatched, setDispatched] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [showFalseAlarm, setShowFalseAlarm] = useState(false);
-  const [completedInfo, setCompletedInfo] = useState<CompletedInfo | null>(null);
+  const [completedInfo, setCompletedInfo] = useState<CompletedInfo | null>(() => {
+    if (event.status === "confirmed")
+      return { type: "confirmed", at: event.handled_at ?? new Date().toISOString() };
+    if (event.status === "false_alarm")
+      return { type: "false_alarm", at: event.handled_at ?? new Date().toISOString(), reason: event.reason ?? undefined };
+    return null;
+  });
 
   const isActive = event.status === "pending" && completedInfo === null;
   const badge = getSeverityBadge(event);

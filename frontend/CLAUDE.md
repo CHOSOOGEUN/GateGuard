@@ -181,3 +181,20 @@ AI가 내보내는 `events[].name` 값이 그대로 `event_type`으로 저장됨
 
 ### 백엔드 추가 요청 대기 중
 - `GET /api/events/`에 `search: Optional[str]` 파라미터 추가 → 완료되면 `useEventsPage.ts`의 `doFetch`에 `search` 파라미터 추가하고 `EventsFilter`의 search를 서버사이드로 전환. `station` 드롭다운도 동일하게 처리 가능
+
+## 페이지별 버그 및 수정 이력
+
+### 대시보드
+
+**프론트 수정 완료**
+- WS를 `AppContext`로 이동 — 다른 페이지에서도 실시간 알림 수신 + 토스트 표시
+- `src/api/transform.ts` 추가 — 백엔드 `dismissed` 상태를 `false_alarm`으로 정규화 (백엔드 수정 시 파일 삭제)
+- `useDashboardData` — cameraStats, falseAlarmEvents에 camera join 추가, false_alarm 이벤트 별도 fetch로 교체
+- `EventDetailModal` — `completedInfo` 초기값을 `event.status`로 설정해 재오픈 시 완료 문구 유지
+- `FalseAlarmList` — 데이터 소스를 notifications 필터에서 `GET /api/events/?status=false_alarm` 직접 fetch로 교체
+- 신뢰도 뱃지 3단계 통일 — `AlertItem`, `EventDetailModal`에 "낮음"(`confidence < 0.4`) 추가
+- 상단 카드 오늘 발생(노랑) / 확인 대기(빨강) 색상 교체
+
+**백엔드 수정 대기**
+- `reason` 컬럼 미존재 — 오탐 사유 DB 미저장, 모달 재오픈 시 사유 사라짐
+- API/WS 응답에 `camera` 객체 미포함 — 역 이름 표시 불안정 (현재 프론트 join으로 우회 중)

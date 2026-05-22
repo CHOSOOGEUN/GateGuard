@@ -1,10 +1,14 @@
 import { createContext } from "react";
+import type { EventResponse } from "@/types";
+
+export type WsEventListener = (event: EventResponse) => void;
 
 export interface AppContextValue {
   wsConnected: boolean;
   setWsConnected: (v: boolean) => void;
   unconfirmedCount: number;
   setUnconfirmedCount: (v: number) => void;
+  subscribeWsEvent: (cb: WsEventListener) => () => void;
 }
 
 export const AppContext = createContext<AppContextValue>({
@@ -12,4 +16,5 @@ export const AppContext = createContext<AppContextValue>({
   setWsConnected: () => {},
   unconfirmedCount: 0,
   setUnconfirmedCount: () => {},
+  subscribeWsEvent: () => () => {},
 });
