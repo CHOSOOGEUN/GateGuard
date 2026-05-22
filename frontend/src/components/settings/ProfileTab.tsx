@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
+import { useAppContext } from "@/hooks/useAppContext";
 
 function decodeToken(): { employee_id: string } | null {
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -14,11 +15,13 @@ function decodeToken(): { employee_id: string } | null {
 
 export default function ProfileTab() {
   const navigate = useNavigate();
+  const { setLoggedIn } = useAppContext();
   const profile = decodeToken();
 
   function handleLogout() {
     localStorage.removeItem("token");
     sessionStorage.removeItem("token");
+    setLoggedIn(false);
     navigate("/");
   }
 

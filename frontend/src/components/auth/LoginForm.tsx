@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api/axios";
 import axios from "axios";
+import { useAppContext } from "@/hooks/useAppContext";
 
 interface LoginFormProps {
   onRegister: () => void;
@@ -10,6 +11,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onRegister, onFindPw }: LoginFormProps) {
   const navigate = useNavigate();
+  const { setLoggedIn } = useAppContext();
   const [employeeId, setEmployeeId] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -28,6 +30,7 @@ export default function LoginForm({ onRegister, onFindPw }: LoginFormProps) {
       } else {
         sessionStorage.setItem("token", access_token);
       }
+      setLoggedIn(true);
       navigate("/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {

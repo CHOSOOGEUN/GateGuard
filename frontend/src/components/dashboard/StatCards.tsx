@@ -24,7 +24,7 @@ export default function StatCards({ stats, loading }: StatCardsProps) {
     {
       count: stats?.today_total ?? 0,
       label: "오늘 발생",
-      sub: "어제 대비 집계",
+      sub: "오늘 이후 집계",
       color: "text-yellow-400",
       bg: "bg-yellow-50",
     },
@@ -38,7 +38,7 @@ export default function StatCards({ stats, loading }: StatCardsProps) {
     {
       count: stats?.confirmed ?? 0,
       label: "처리 완료",
-      sub: "오늘 처리",
+      sub: "누적 처리 건수",
       color: "text-green-500",
       bg: "bg-green-50",
     },

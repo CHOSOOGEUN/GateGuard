@@ -9,6 +9,7 @@ export interface AppContextValue {
   unconfirmedCount: number;
   setUnconfirmedCount: (v: number) => void;
   subscribeWsEvent: (cb: WsEventListener) => () => void;
+  setLoggedIn: (v: boolean) => void;
 }
 
 export const AppContext = createContext<AppContextValue>({
@@ -17,4 +18,5 @@ export const AppContext = createContext<AppContextValue>({
   unconfirmedCount: 0,
   setUnconfirmedCount: () => {},
   subscribeWsEvent: () => () => {},
+  setLoggedIn: () => {},
 });

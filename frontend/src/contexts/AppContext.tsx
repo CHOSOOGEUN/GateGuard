@@ -9,6 +9,9 @@ import { normalizeEvent } from "@/api/transform";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [unconfirmedCount, setUnconfirmedCount] = useState(0);
+  const [loggedIn, setLoggedIn] = useState(
+    () => !!(localStorage.getItem("token") || sessionStorage.getItem("token")),
+  );
   const listenersRef = useRef<Set<WsEventListener>>(new Set());
 
   const subscribeWsEvent = useCallback((cb: WsEventListener) => {
@@ -30,7 +33,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     listenersRef.current.forEach((cb) => cb(event));
-  });
+  }, loggedIn);
 
   return (
     <AppContext.Provider
@@ -40,6 +43,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         unconfirmedCount,
         setUnconfirmedCount,
         subscribeWsEvent,
+        setLoggedIn,
       }}
     >
       {children}

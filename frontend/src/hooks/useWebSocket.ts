@@ -7,7 +7,10 @@ export interface WsMessage {
   data: unknown;
 }
 
-export function useWebSocket(onMessage: (msg: WsMessage) => void): {
+export function useWebSocket(
+  onMessage: (msg: WsMessage) => void,
+  enabled = true,
+): {
   connected: boolean;
 } {
   const onMessageRef = useRef(onMessage);
@@ -18,6 +21,8 @@ export function useWebSocket(onMessage: (msg: WsMessage) => void): {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    if (!enabled) return;
+
     let active = true;
 
     function connect(): WebSocket {
