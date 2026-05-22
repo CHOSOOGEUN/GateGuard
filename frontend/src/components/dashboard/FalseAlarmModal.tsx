@@ -64,7 +64,9 @@ export default function FalseAlarmModal({
       >
         {/* 헤더 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="font-bold text-gray-900 dark:text-white text-lg">오탐신고</h2>
+          <h2 className="font-bold text-gray-900 dark:text-white text-lg">
+            오탐신고
+          </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
@@ -90,13 +92,19 @@ export default function FalseAlarmModal({
         <div className="px-6 py-5 space-y-4">
           {/* 이벤트 요약 */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-xl px-4 py-3">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{locationText}</p>
-            <p className="text-xs mt-0.5 text-gray-400 dark:text-gray-400">이벤트 #{event.id}</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              {locationText}
+            </p>
+            <p className="text-xs mt-0.5 text-gray-400 dark:text-gray-400">
+              Event #{event.id}
+            </p>
           </div>
 
           {/* 오탐 사유 선택 */}
           <div className="space-y-2.5">
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">오탐 사유</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              오탐 사유
+            </p>
             {REASONS.map((reason) => (
               <label
                 key={reason}
@@ -110,7 +118,9 @@ export default function FalseAlarmModal({
                   onChange={() => setSelectedReason(reason)}
                   className="accent-[#4B73F7] w-4 h-4"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{reason}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {reason}
+                </span>
               </label>
             ))}
           </div>

@@ -42,11 +42,13 @@ export default function StatsPage() {
             : []
         );
         setCameraStats(
-          camStatsResult.value.map((s) => ({
-            ...s,
-            station_name: cameraMap.get(s.camera_id)?.station_name ?? `CAM-${s.camera_id}`,
-            location: cameraMap.get(s.camera_id)?.location ?? "",
-          }))
+          camStatsResult.value
+            .map((s) => ({
+              ...s,
+              station_name: cameraMap.get(s.camera_id)?.station_name ?? `CAM-${s.camera_id}`,
+              location: cameraMap.get(s.camera_id)?.location ?? "",
+            }))
+            .sort((a, b) => b.count - a.count)
         );
       }
       setLoading(false);
