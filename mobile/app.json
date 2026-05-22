@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "GateGuard",
+    "slug": "gateguard-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/logo.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a56db"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gateguard.mobile"
+    },
+    "android": {
+      "package": "com.gateguard.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#1a56db"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "color": "#1a56db"
+        }
+      ],
+      "expo-font"
+    ],
+    "scheme": "gateguard",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9125ff1d-0731-4afc-8a94-77d7cdfc1bdb"
+      }
+    }
+  }
+}
