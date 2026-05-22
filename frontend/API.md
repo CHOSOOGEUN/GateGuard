@@ -11,8 +11,6 @@
 - [cameras](#cameras)
 - [events](#events)
 - [notifications](#notifications)
-- [통계 화면 구현 가능성](#통계-화면-구현-가능성)
-- [미사용 API 활용 방안](#미사용-api-활용-방안)
 
 ---
 
@@ -33,16 +31,16 @@
 
 | Method | Endpoint             | 프론트 연동 | 파일                      |
 | ------ | -------------------- | ----------- | ------------------------- |
-| POST   | `/api/auth/register` | ❌ 미사용   | —                         |
+| POST   | `/api/auth/register` | ✅          | `src/pages/LoginPage.tsx` |
 | POST   | `/api/auth/login`    | ✅          | `src/pages/LoginPage.tsx` |
-| POST   | `/api/auth/find-pw`  | ❌ 미사용   | —                         |
+| POST   | `/api/auth/find-pw`  | ✅          | `src/pages/LoginPage.tsx` |
 
 ### POST /api/auth/login
 
 ```ts
 // Request
 {
-  email: string;
+  employee_id: string;
   password: string;
 }
 
@@ -54,15 +52,25 @@
 
 로그인 성공 시 토큰을 localStorage(remember me) 또는 sessionStorage(세션)에 저장 후 `/dashboard` 로 이동.
 
+### POST /api/auth/find-pw
+
+```ts
+// Query Params
+{
+  employee_id: string;
+  email: string;
+}
+```
+
 ---
 
 ## cameras
 
-| Method | Endpoint                          | 프론트 연동       | 파일                 |
-| ------ | --------------------------------- | ----------------- | -------------------- |
-| GET    | `/api/cameras/`                   | ✅ `getCameras()` | `src/api/cameras.ts` |
-| POST   | `/api/cameras/`                   | ❌ 미사용         | —                    |
-| PATCH  | `/api/cameras/{camera_id}/toggle` | ❌ 미사용         | —                    |
+| Method | Endpoint                          | 프론트 연동         | 파일                 |
+| ------ | --------------------------------- | ------------------- | -------------------- |
+| GET    | `/api/cameras/`                   | ✅ `getCameras()`   | `src/api/cameras.ts` |
+| POST   | `/api/cameras/`                   | ✅ `createCamera()` | `src/api/cameras.ts` |
+| PATCH  | `/api/cameras/{camera_id}/toggle` | ✅ `toggleCamera()` | `src/api/cameras.ts` |
 
 ### GET /api/cameras/
 
@@ -71,10 +79,13 @@
 interface CameraResponse {
   id: number;
   location: string; // 게이트 번호 (예: "1번 게이트")
-  station_name: string; // 역 이름 (예: "수원역")
+  station_name: string; // 역 이름 (예: "강남역")
   is_active: boolean;
 }
+[];
 ```
+
+> ⚠️ 백엔드 ORDER BY 없음 — 새로고침마다 순서 변동 가능. 백엔드 정렬 추가 요청 중.
 
 이벤트 API 응답에는 `camera_id` 만 있으므로, 이 API로 카메라 맵을 만든 뒤 이벤트와 조인하여 역이름/게이트 표시.
 
@@ -98,8 +109,13 @@ interface CameraResponse {
 // Query Params
 {
   limit?: number;
+  offset?: number;
   status?: "pending" | "confirmed" | "false_alarm";
+  type?: string;           // event_type 필터
   camera_id?: number;
+  date_from?: string;      // ISO 8601
+  date_to?: string;        // ISO 8601
+  search?: string;         // EV-번호 / CAM-번호 / 역이름 / 게이트 통합검색
 }
 
 // Response
@@ -107,28 +123,29 @@ interface EventResponse {
   id: number;
   camera_id: number;
   timestamp: string;            // ISO 8601
-  clip_url: string | null;      // S3 영상 URL
+  clip_url: string | null;
   track_id: number | null;
   confidence: number | null;    // 0.0 ~ 1.0
   status: "pending" | "confirmed" | "false_alarm";
-  description?: string;         // AI 감지 설명 — 백엔드 포함 여부 미확정
-  appearance_tags?: string[];   // 인상착의 태그 — 백엔드 포함 여부 미확정
-  event_type?: string;          // 감지 유형 — 백엔드 포함 여부 미확정
-  assigned_to?: string;         // 담당자 — 백엔드 포함 여부 미확정
-}
+  event_type: string;           // tailgating | jump | crawling | unpaid | unknown
+  reason: string | null;        // 오탐 사유 (false_alarm 시)
+  handled_by: number | null;    // 처리한 관리자 내부 ID
+  handled_at: string | null;    // ISO 8601
+}[]
 ```
 
-> **미확정 필드**: `description`, `appearance_tags`, `event_type`, `assigned_to` 는 실제 응답 포함 여부 백엔드 확인 필요. 현재 프론트는 optional로 선언 후 없으면 fallback 처리.
+> AI 분류기 실제 출력: `tailgating | jump | crawling | unpaid` (4종)  
+> `unknown`은 DB 기본값 — AI가 event_type 없이 전송 시 저장됨
 
 ### GET /api/events/stats
 
 ```ts
 // Response
 interface EventStats {
-  today_total: number;
-  pending: number;
-  confirmed: number;
-  false_alarm: number;
+  today_total: number; // 오늘 발생 건수
+  pending: number; // 전체 미처리
+  confirmed: number; // 전체 처리완료
+  false_alarm: number; // 전체 오탐
 }
 ```
 
@@ -136,26 +153,26 @@ interface EventStats {
 
 ```ts
 // Response
-interface CameraEventStats {
+{
   camera_id: number;
-  station_name: string;
-  location: string;
   count: number;
 }
 [];
 ```
 
+> ⚠️ `station_name`, `location` 미포함 — 프론트에서 `GET /api/cameras/` 결과로 조인하여 표시.
+
 ### POST /api/events/{event_id}/false-alarm
 
 ```ts
 // Request
-{ reason: string; memo?: string }
+{
+  reason: string;
+}
 
 // 사전 정의 reason 값 (FalseAlarmModal 기준)
 // "기기 오작동" | "노인 무임혜택 미인식" | "장애인 혜택 미인식" | "기타"
 ```
-
-> **미확정**: `reason`, `memo` 필드명 백엔드 확정 필요.
 
 ### PATCH /api/events/{event_id}/status
 
@@ -170,11 +187,11 @@ interface CameraEventStats {
 
 ## notifications
 
-| Method | Endpoint                       | 프론트 연동                   | 파일                       | 비고           |
-| ------ | ------------------------------ | ----------------------------- | -------------------------- | -------------- |
-| GET    | `/api/notifications/`          | ✅ `getNotifications()`       | `src/api/notifications.ts` | 인증 불필요    |
-| PATCH  | `/api/notifications/{id}/read` | ✅ `markNotificationRead(id)` | `src/api/notifications.ts` |                |
-| POST   | `/api/notifications/read-all`  | ❌ 미사용                     | —                          | 전체 읽음 처리 |
+| Method | Endpoint                       | 프론트 연동                   | 파일                       | 비고               |
+| ------ | ------------------------------ | ----------------------------- | -------------------------- | ------------------ |
+| GET    | `/api/notifications/`          | ✅ `getNotifications()`       | `src/api/notifications.ts` |                    |
+| PATCH  | `/api/notifications/{id}/read` | ✅ `markNotificationRead(id)` | `src/api/notifications.ts` |                    |
+| POST   | `/api/notifications/read-all`  | ❌ 미사용                     | —                          | 프론트 불필요 판단 |
 
 ### GET /api/notifications/
 
@@ -186,36 +203,20 @@ interface CameraEventStats {
 interface NotificationResponse {
   id: number;
   event_id: number;
-  sent_at: string;          // ISO 8601
-  read_at: string | null;   // null = 미읽음
-  event?: EventResponse;    // 백엔드 embed 여부 미확정
+  sent_at: string;        // ISO 8601
+  read_at: string | null; // null = 미읽음
 }[]
 ```
 
 ---
 
-## 통계 화면 구현 가능성
+## 백엔드 추가 요청 대기 중
 
-| 섹션                                    | 가능 여부 | 방법                                            | 비고                                                    |
-| --------------------------------------- | --------- | ----------------------------------------------- | ------------------------------------------------------- |
-| 총 발생 / 미확인 / 처리완료 / 오탐 카드 | ✅        | `GET /api/events/stats`                         |                                                         |
-| 오탐율 계산                             | ✅        | `false_alarm / today_total` 프론트 계산         |                                                         |
-| 역별 / 게이트별 발생 순위               | ✅        | `GET /api/events/stats/by-camera`               |                                                         |
-| 시간대별 발생 분포                      | ✅ 조건부 | `GET /api/events/` 대량 fetch 후 timestamp 집계 | 데이터 증가 시 성능 고려 필요                           |
-| 일별 발생 추이                          | ✅ 조건부 | `GET /api/events/` 날짜별 집계                  | 동일                                                    |
-| 감지 유형 비율 (파이 차트)              | ⚠️ 미확정 | `event_type` 필드 집계                          | 백엔드 `event_type` 응답 포함 여부 확인 필요            |
-| 오탐신고 사유별 현황                    | ⚠️ 미확정 | false_alarm 이벤트의 `reason` 집계              | `EventResponse`에 `reason` 필드 없음 — 백엔드 추가 필요 |
-| 전일 / 전월 비교 수치                   | ❌        | —                                               | 기간 비교 파라미터 또는 별도 API 필요                   |
-| 평균 처리 시간                          | ❌        | —                                               | `resolved_at` 필드 없음 — 백엔드 추가 필요              |
-
----
-
-## 미사용 API 활용 방안
-
-| Endpoint                           | 활용 가능 위치                           |
-| ---------------------------------- | ---------------------------------------- |
-| `POST /api/auth/register`          | 관리자 계정 생성 기능 (SettingsPage)     |
-| `POST /api/auth/find-pw`           | 로그인 페이지 "비밀번호 찾기" 링크       |
-| `POST /api/cameras/`               | SettingsPage 카메라 등록 폼              |
-| `PATCH /api/cameras/{id}/toggle`   | SettingsPage 카메라 활성화/비활성화 토글 |
-| `POST /api/notifications/read-all` | Header 알림 패널 "전체 읽음" 버튼        |
+| Endpoint                                   | 용도                         | 프론트 반영 예정                           |
+| ------------------------------------------ | ---------------------------- | ------------------------------------------ |
+| `GET /api/events/` `station` 파라미터 추가 | 역 드롭다운 서버사이드 필터  | `useEventsPage.ts` 클라이언트 필터 제거    |
+| `GET /api/events/` `total` 필드 응답 추가  | 전체 페이지 수 표시          | `EventsPagination` 페이지 번호 목록        |
+| `GET /api/events/stats/daily`              | 날짜별 발생 건수 (`days=12`) | `DailyTrendChart` 1000건 제한 해소         |
+| `GET /api/events/stats/hourly`             | 시간대별 발생 건수           | `HourlyDistributionChart` 1000건 제한 해소 |
+| `GET /api/cameras/` ORDER BY id            | 카메라 목록 정렬 고정        | `CamerasTab` 순서 안정화                   |
+| 비활성 카메라 이벤트 수신 시 400 반환      | 비활성 카메라 이벤트 차단    | —                                          |

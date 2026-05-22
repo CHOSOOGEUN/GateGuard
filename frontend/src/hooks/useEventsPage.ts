@@ -89,8 +89,7 @@ export function useEventsPage() {
     setPage(1);
   }, []);
 
-  // station 은 서버 파라미터가 없으므로 현재 페이지 내에서 클라이언트 필터
-  // search 는 서버사이드로 처리됨
+  // station: 백엔드 파라미터 미지원 → 현재 페이지 내 클라이언트 필터
   const displayEvents = useMemo(() => {
     if (!filters.station) return rawEvents;
     return rawEvents.filter(
