@@ -11,6 +11,7 @@ export function buildDailyData(events: EventResponse[]): Record<string, number> 
     result[`${d.getMonth() + 1}/${d.getDate()}`] = 0;
   }
   events.forEach((e) => {
+    if (e.status === "false_alarm") return;
     const d = new Date(e.timestamp);
     const key = `${d.getMonth() + 1}/${d.getDate()}`;
     if (key in result) result[key]++;
@@ -25,6 +26,7 @@ export function buildHourlyData(events: EventResponse[]): Record<string, number>
   ];
   const result: Record<string, number> = Object.fromEntries(slots.map((s) => [s, 0]));
   events.forEach((e) => {
+    if (e.status === "false_alarm") return;
     const h = new Date(e.timestamp).getHours();
     const start = Math.floor(h / 2) * 2;
     const key = `${String(start).padStart(2, "0")}-${String(start + 2).padStart(2, "0")}`;
@@ -36,6 +38,7 @@ export function buildHourlyData(events: EventResponse[]): Record<string, number>
 export function buildTypeData(events: EventResponse[]): Record<string, number> {
   const result: Record<string, number> = {};
   events.forEach((e) => {
+    if (e.status === "false_alarm") return;
     if (!e.event_type || e.event_type === "normal" || e.event_type === "unknown") return;
     const label = labelEventType(e.event_type);
     result[label] = (result[label] ?? 0) + 1;
