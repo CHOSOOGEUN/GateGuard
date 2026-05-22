@@ -1,13 +1,14 @@
+import re
 from typing import Optional
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
 from app.api.websocket import manager
 from app.database import get_db
-from app.models.models import Event, Notification, Admin
+from app.models.models import Event, Notification, Admin, Camera
 from app.schemas.schemas import EventCreate, EventResponse, EventStatusUpdate
 from app.workers.tasks import upload_clip_task
 from pydantic import BaseModel
@@ -27,6 +28,7 @@ async def list_events(
     type: Optional[str] = None,
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
+    search: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
@@ -49,8 +51,8 @@ async def list_events(
     Returns:
         list[Event]: 조회된 이벤트 객체 리스트
     """
-    query = select(Event).order_by(Event.timestamp.desc()).offset(offset).limit(limit)
-    
+    query = select(Event)
+
     if camera_id is not None:
         query = query.where(Event.camera_id == camera_id)
     if status:
@@ -61,7 +63,29 @@ async def list_events(
         query = query.where(Event.timestamp >= date_from)
     if date_to:
         query = query.where(Event.timestamp <= date_to)
-    
+
+    # 서버사이드 통합 검색: EV-번호 / CAM-번호 / 역이름 / 게이트(위치) / event_type / reason
+    if search and search.strip():
+        s = search.strip()
+        pattern = f"%{s}%"
+        conds = [
+            Camera.station_name.ilike(pattern),
+            Camera.location.ilike(pattern),
+            Event.event_type.ilike(pattern),
+            Event.reason.ilike(pattern),
+        ]
+        m = re.search(r"EV[-_]?(\d+)", s, re.IGNORECASE)
+        if m:
+            conds.append(Event.id == int(m.group(1)))
+        m = re.search(r"CAM[-_]?(\d+)", s, re.IGNORECASE)
+        if m:
+            conds.append(Event.camera_id == int(m.group(1)))
+        if s.isdigit():
+            conds.append(Event.id == int(s))
+        query = query.join(Camera, Event.camera_id == Camera.id).where(or_(*conds))
+
+    query = query.order_by(Event.timestamp.desc()).offset(offset).limit(limit)
+
     result = await db.execute(query)
     return result.scalars().all()
 
