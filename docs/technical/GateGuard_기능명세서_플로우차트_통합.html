@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GateGuard 기능명세서 및 플로우차트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0f2d5e; --blue: #1a56db; --blue-l: #dbeafe;
+  --purple: #534ab7; --teal: #0f6e56; --coral: #993c1d;
+  --amber: #854f0b; --green: #166534; --gray: #475569;
+  --bg: #f8fafc; --text: #1e293b; --muted: #64748b; --border: #e2e8f0;
+  --white: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
+
+/* 표지 */
+.cover {
+  background: var(--navy);
+  color: white;
+  text-align: center;
+  padding: 80px 40px;
+  margin-bottom: 0;
+}
+.cover .logo { font-size: 48px; font-weight: 700; letter-spacing: -1px; margin-bottom: 12px; }
+.cover .subtitle { font-size: 18px; opacity: 0.75; margin-bottom: 8px; }
+.cover .meta { font-size: 13px; opacity: 0.5; margin-top: 24px; }
+
+/* 목차 */
+.toc {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 32px 48px;
+  display: flex; gap: 48px; flex-wrap: wrap;
+}
+.toc-item { font-size: 13px; color: var(--muted); }
+.toc-item strong { display: block; color: var(--navy); font-size: 14px; margin-bottom: 4px; }
+
+/* 본문 */
+.content { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+
+/* 파트 헤더 */
+.part-header {
+  background: var(--navy);
+  color: white;
+  padding: 20px 28px;
+  border-radius: 12px;
+  margin-bottom: 40px;
+}
+.part-header .part-num { font-size: 11px; opacity: 0.6; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.part-header h2 { font-size: 22px; font-weight: 700; }
+.part-header p { font-size: 13px; opacity: 0.65; margin-top: 4px; }
+
+/* 섹션 헤더 */
+.sec-header {
+  background: var(--blue);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 32px 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* 테이블 */
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+thead tr { background: var(--blue); color: white; }
+thead th { padding: 10px 12px; text-align: left; font-weight: 600; }
+tbody tr:nth-child(even) { background: var(--blue-l); }
+tbody tr:nth-child(odd) { background: white; }
+tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); line-height: 1.5; }
+.badge-done { background: #dcfce7; color: #166534; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-todo { background: #fee2e2; color: #991b1b; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-self { background: #dbeafe; color: #1e40af; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #c2410c; }
+
+/* 정보 박스 */
+.info-box { background: var(--blue-l); border-left: 4px solid var(--blue); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: #1e40af; margin: 12px 0; line-height: 1.6; }
+.warn-box { background: #fefce8; border-left: 4px solid #ca8a04; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: #713f12; margin: 12px 0; line-height: 1.6; }
+
+/* 플로우차트 래퍼 */
+.flow-wrap { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 16px 0 32px; overflow-x: auto; }
+.flow-wrap svg { display: block; margin: 0 auto; }
+
+/* 페이지 구분 */
+.page-break { border: none; border-top: 2px dashed var(--border); margin: 56px 0; }
+
+/* 푸터 */
+.footer { text-align: center; padding: 32px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<!-- 표지 -->
+<div class="cover">
+  <div class="logo">🛡 GateGuard</div>
+  <div class="subtitle">기능명세서 및 프론트엔드 API 연동 가이드</div>
+  <div style="font-size:14px;opacity:0.6;margin-top:8px;">담당: 이지현 (프론트팀장) &nbsp;|&nbsp; 작성: 이동근 (인프라) &nbsp;|&nbsp; 2026.03.30</div>
+  <div class="meta">경기대학교 AI컴퓨터공학부 캡스톤디자인 2026</div>
+</div>
+
+<!-- 서버 정보 -->
+<div style="background:white;border-bottom:1px solid var(--border);padding:16px 48px;font-size:13px;color:var(--muted);display:flex;gap:32px;flex-wrap:wrap;">
+  <span>🌐 API 서버: <code>http://15.135.92.86:8000</code></span>
+  <span>📖 Swagger: <code>http://15.135.92.86:8000/docs</code></span>
+  <span>⚡ WebSocket: <code>ws://15.135.92.86:8000/ws/events</code></span>
+  <span>🔐 인증: <code>Authorization: Bearer {token}</code></span>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PART 1. 기능명세서 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="part-header">
+  <div class="part-num">PART 01</div>
+  <h2>기능명세서</h2>
+  <p>피그마 화면 기준 각 화면별 기능 및 API 연동 정의</p>
+</div>
+
+<!-- 01. 로그인 -->
+<div class="sec-header">01. 로그인 화면</div>
+<table>
+  <thead><tr><th>기능</th><th>상세 설명</th><th>연동 API</th><th>구현 여부</th></tr></thead>
+  <tbody>
+    <tr><td>로그인</td><td>이메일 + 비밀번호 입력 후 Sign In 클릭</td><td><code>POST /api/auth/login</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>비밀번호 기억</td><td>로컬스토리지에 토큰 저장하여 로그인 상태 유지</td><td>-</td><td><span class="badge-self">프론트 자체</span></td></tr>
+    <tr><td>토큰 관리</td><td>로그인 성공 시 JWT 저장 및 이후 요청에 자동 포함</td><td><code>POST /api/auth/login</code></td><td><span class="badge-done">구현완료</span></td></tr>
+  </tbody>
+</table>
+
+<!-- 02. 대시보드 -->
+<div class="sec-header">02. 대시보드 화면</div>
+<table>
+  <thead><tr><th>기능</th><th>상세 설명</th><th>연동 API</th><th>구현 여부</th></tr></thead>
+  <tbody>
+    <tr><td>통계 카드</td><td>오늘 발생 / 확인 대기 / 처리 완료 / 오탐 건수</td><td><code>GET /api/events/stats</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>최신 알림 리스트</td><td>최신 이벤트 목록 표시, 클릭 시 상세보기 이동</td><td><code>GET /api/events/?limit=20</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>실시간 알림</td><td>무임승차 감지 시 즉시 리스트 상단에 추가</td><td><code>WebSocket /ws/events</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>구간별 현황</td><td>역별/게이트별 알림 건수 우측 패널 표시</td><td><code>GET /api/events/stats/by-camera</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>최근 오탐 신고</td><td>최근 오탐 처리 항목 우측 하단 표시</td><td><code>GET /api/notifications/</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>상세보기 버튼</td><td>알림 항목 클릭 시 상세보기 이동</td><td><code>GET /api/events/{id}</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>오탐신고 버튼</td><td>알림 항목에서 오탐신고창으로 이동</td><td><code>POST /api/events/{id}/false-alarm</code></td><td><span class="badge-todo">미구현</span></td></tr>
+  </tbody>
+</table>
+
+<!-- 03. 상세보기 -->
+<div class="sec-header">03. 상세보기 화면</div>
+<table>
+  <thead><tr><th>기능</th><th>상세 설명</th><th>연동 API</th><th>구현 여부</th></tr></thead>
+  <tbody>
+    <tr><td>사건사진</td><td>S3에 저장된 영상 클립 또는 캡처 이미지 표시</td><td><code>EventResponse.clip_url</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>감지 설명</td><td>AI가 분석한 무임승차 유형 및 용의자 설명</td><td>EventResponse 데이터 활용</td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>위치/시각</td><td>역 이름, 게이트 번호, 발생 시각 표시</td><td>CameraResponse + EventResponse</td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>처리완료</td><td>이벤트 상태를 confirmed로 변경</td><td><code>PATCH /api/events/{id}/status</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>오탐신고</td><td>오탐신고창으로 이동</td><td><code>POST /api/events/{id}/false-alarm</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>이벤트 조회</td><td>단건 이벤트 상세 정보 로드</td><td><code>GET /api/events/{id}</code></td><td><span class="badge-todo">미구현</span></td></tr>
+  </tbody>
+</table>
+
+<!-- 04. 오탐신고 -->
+<div class="sec-header">04. 오탐신고 화면</div>
+<table>
+  <thead><tr><th>기능</th><th>상세 설명</th><th>연동 API</th><th>구현 여부</th></tr></thead>
+  <tbody>
+    <tr><td>사건사진</td><td>동일 이벤트 사진 재표시</td><td><code>EventResponse.clip_url</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>사유 선택</td><td>정상태그 인식 지연 / 시스템 오류 / 기계 결함 / 기타</td><td>프론트 UI</td><td><span class="badge-self">프론트 자체</span></td></tr>
+    <tr><td>신고 완료</td><td>선택 사유와 함께 오탐 API 호출 후 상태 변경</td><td><code>POST /api/events/{id}/false-alarm</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>취소</td><td>신고 취소 후 이전 화면 복귀</td><td>-</td><td><span class="badge-self">프론트 자체</span></td></tr>
+  </tbody>
+</table>
+
+<!-- 05. 감지 로그 -->
+<div class="sec-header">05. 감지 로그 화면</div>
+<table>
+  <thead><tr><th>기능</th><th>상세 설명</th><th>연동 API</th><th>구현 여부</th></tr></thead>
+  <tbody>
+    <tr><td>전체 이력 조회</td><td>전체 기간 무임승차 감지 이력 최신순 목록 표시</td><td><code>GET /api/events/</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>날짜별 필터링</td><td>시작일 ~ 종료일 범위로 이벤트 조회</td><td><code>GET /api/events/?date_from=&date_to=</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>유형별 필터링</td><td>무임승차 유형별 필터링</td><td><code>GET /api/events/?type=</code></td><td><span class="badge-todo">미구현</span></td></tr>
+    <tr><td>카메라별 필터링</td><td>특정 역/게이트 카메라별 이벤트 필터링</td><td><code>GET /api/events/?camera_id=</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>상태별 필터링</td><td>처리완료 / 확인대기 / 오탐 등 상태별 필터링</td><td><code>GET /api/events/?status=</code></td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>영상 다운로드</td><td>감지된 영상 클립 S3 URL을 통해 다운로드</td><td>EventResponse.clip_url 활용</td><td><span class="badge-done">구현완료</span></td></tr>
+    <tr><td>페이지네이션</td><td>대량 데이터 페이지 단위 조회</td><td><code>GET /api/events/?limit=&offset=</code></td><td><span class="badge-todo">미구현</span></td></tr>
+  </tbody>
+</table>
+
+<!-- 구현 현황 요약 -->
+<div class="sec-header">구현 현황 요약</div>
+<table>
+  <thead><tr><th>구분</th><th>기능</th><th>상태</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>인증</td><td>로그인 / JWT 발급</td><td><span class="badge-done">구현완료</span></td><td></td></tr>
+    <tr><td>대시보드</td><td>최신 알림 리스트 / 실시간 알림</td><td><span class="badge-done">구현완료</span></td><td></td></tr>
+    <tr><td>대시보드</td><td>통계 카드 / 구간별 알림 현황</td><td><span class="badge-todo">미구현</span></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>상세보기</td><td>이벤트 단건 조회</td><td><span class="badge-todo">미구현</span></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>상세보기</td><td>처리완료 상태 변경</td><td><span class="badge-done">구현완료</span></td><td></td></tr>
+    <tr><td>오탐신고</td><td>오탐 신고 접수</td><td><span class="badge-todo">미구현</span></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>감지 로그</td><td>전체 이력 / 카메라·상태 필터링</td><td><span class="badge-done">구현완료</span></td><td></td></tr>
+    <tr><td>감지 로그</td><td>날짜·유형·페이지네이션</td><td><span class="badge-todo">미구현</span></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>카메라</td><td>카메라 목록 조회</td><td><span class="badge-done">구현완료</span></td><td></td></tr>
+    <tr><td>알림</td><td>알림 목록 / 읽음 처리</td><td><span class="badge-done">구현완료</span></td><td></td></tr>
+  </tbody>
+</table>
+<div class="warn-box">⚠ 미구현 API 4개는 백엔드 팀장(조수근)에게 M2 일정 내 구현 요청이 필요합니다.<br>우선순위: 이벤트 단건 조회 > 오탐 신고 > 통계 API</div>
+
+<hr class="page-break">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PART 2. 시스템 플로우차트 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="part-header">
+  <div class="part-num">PART 02</div>
+  <h2>시스템 플로우차트</h2>
+  <p>GateGuard 핵심 흐름 시각화</p>
+</div>
+
+<!-- Flow 1. 전체 시스템 흐름 -->
+<div class="sec-header">01. 전체 시스템 흐름</div>
+<div class="flow-wrap">
+<svg width="100%" viewBox="0 0 680 760">
+<defs>
+  <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<!-- CCTV -->
+<g><rect x="190" y="20" width="300" height="52" rx="10" fill="#475569"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="42" text-anchor="middle" dominant-baseline="central">CCTV 영상 입력</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#cbd5e1" x="340" y="61" text-anchor="middle" dominant-baseline="central">실시간 스트림</text></g>
+<line x1="340" y1="72" x2="340" y2="100" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<!-- 비식별화 -->
+<g><rect x="190" y="100" width="300" height="52" rx="10" fill="#0f6e56"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="121" text-anchor="middle" dominant-baseline="central">비식별화 처리</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#99e6cc" x="340" y="140" text-anchor="middle" dominant-baseline="central">얼굴 감지 및 블러 (OpenCV)</text></g>
+<line x1="340" y1="152" x2="340" y2="180" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<!-- AI 탐지 -->
+<g><rect x="170" y="180" width="340" height="52" rx="10" fill="#534ab7"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="201" text-anchor="middle" dominant-baseline="central">AI 탐지 (YOLOv11 + ByteTrack)</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#c4bfee" x="340" y="220" text-anchor="middle" dominant-baseline="central">다중 객체 감지 및 ID 추적</text></g>
+<line x1="340" y1="232" x2="340" y2="260" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<!-- Supervision -->
+<g><rect x="190" y="260" width="300" height="52" rx="10" fill="#3c3489"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="281" text-anchor="middle" dominant-baseline="central">Supervision 분석</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#b8b3e0" x="340" y="300" text-anchor="middle" dominant-baseline="central">라인 크로싱 / 구역 통과 감지</text></g>
+<line x1="340" y1="312" x2="340" y2="340" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<!-- 판정 -->
+<g><rect x="180" y="340" width="320" height="52" rx="10" fill="#993c1d"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="361" text-anchor="middle" dominant-baseline="central">무임승차 판정 (FastAPI)</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#f4c4a8" x="340" y="380" text-anchor="middle" dominant-baseline="central">게이트 상태 불일치 감지 → 이벤트 생성</text></g>
+<!-- 분기선 -->
+<line x1="340" y1="392" x2="340" y2="420" stroke="#94a3b8" stroke-width="2"/>
+<line x1="100" y1="420" x2="580" y2="420" stroke="#94a3b8" stroke-width="2"/>
+<line x1="100" y1="420" x2="100" y2="448" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="340" y1="420" x2="340" y2="448" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<line x1="580" y1="420" x2="580" y2="448" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#94a3b8" x="340" y="412" text-anchor="middle">동시 처리</text>
+<!-- WebSocket -->
+<g><rect x="20" y="448" width="160" height="52" rx="10" fill="#854f0b"/><text font-family="Noto Sans KR,sans-serif" font-size="13" font-weight="600" fill="white" x="100" y="466" text-anchor="middle" dominant-baseline="central">WebSocket 알림</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fcd34d" x="100" y="485" text-anchor="middle" dominant-baseline="central">실시간 브로드캐스트</text></g>
+<!-- TimescaleDB -->
+<g><rect x="260" y="448" width="160" height="52" rx="10" fill="#185fa5"/><text font-family="Noto Sans KR,sans-serif" font-size="13" font-weight="600" fill="white" x="340" y="466" text-anchor="middle" dominant-baseline="central">TimescaleDB 저장</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#93c5fd" x="340" y="485" text-anchor="middle" dominant-baseline="central">시계열 이벤트 기록</text></g>
+<!-- S3 -->
+<g><rect x="500" y="448" width="160" height="52" rx="10" fill="#3b6d11"/><text font-family="Noto Sans KR,sans-serif" font-size="13" font-weight="600" fill="white" x="580" y="466" text-anchor="middle" dominant-baseline="central">S3 영상 업로드</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#86efac" x="580" y="485" text-anchor="middle" dominant-baseline="central">Celery 비동기 처리</text></g>
+<!-- 관리자 화살표 -->
+<line x1="100" y1="500" x2="100" y2="560" stroke="#94a3b8" stroke-width="2"/>
+<line x1="100" y1="560" x2="200" y2="560" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<!-- 관리자 -->
+<g><rect x="200" y="536" width="280" height="52" rx="10" fill="#854f0b"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="557" text-anchor="middle" dominant-baseline="central">관리자 대시보드</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fcd34d" x="340" y="576" text-anchor="middle" dominant-baseline="central">실시간 알림 수신 및 현황 확인</text></g>
+<line x1="340" y1="588" x2="340" y2="616" stroke="#94a3b8" stroke-width="2" marker-end="url(#a1)"/>
+<!-- 처리 -->
+<g><rect x="200" y="616" width="280" height="52" rx="10" fill="#0f6e56"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="637" text-anchor="middle" dominant-baseline="central">처리완료 / 오탐신고</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#99e6cc" x="340" y="656" text-anchor="middle" dominant-baseline="central">상태 업데이트</text></g>
+<!-- 레이블 -->
+<text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#94a3b8" x="340" y="740" text-anchor="middle">전체 시스템 흐름</text>
+</svg>
+</div>
+
+<!-- Flow 2. 로그인 흐름 -->
+<div class="sec-header">02. 로그인 → 대시보드 흐름</div>
+<div class="flow-wrap">
+<svg width="100%" viewBox="0 0 680 560">
+<defs>
+  <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<g><rect x="190" y="20" width="300" height="52" rx="10" fill="#475569"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="42" text-anchor="middle" dominant-baseline="central">관리자 로그인 시도</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#cbd5e1" x="340" y="61" text-anchor="middle" dominant-baseline="central">이메일 + 비밀번호 입력</text></g>
+<line x1="340" y1="72" x2="340" y2="100" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+<g><rect x="190" y="100" width="300" height="52" rx="10" fill="#185fa5"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="121" text-anchor="middle" dominant-baseline="central">POST /api/auth/login</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#93c5fd" x="340" y="140" text-anchor="middle" dominant-baseline="central">이메일 + 비밀번호 검증</text></g>
+<line x1="340" y1="152" x2="340" y2="188" stroke="#94a3b8" stroke-width="2"/>
+<line x1="150" y1="188" x2="530" y2="188" stroke="#94a3b8" stroke-width="2"/>
+<line x1="150" y1="188" x2="150" y2="216" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="530" y1="188" x2="530" y2="216" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#94a3b8" x="220" y="204" text-anchor="middle">성공</text>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#94a3b8" x="462" y="204" text-anchor="middle">실패</text>
+<g><rect x="50" y="216" width="200" height="52" rx="10" fill="#166534"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="150" y="237" text-anchor="middle" dominant-baseline="central">✓ 인증 성공</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#86efac" x="150" y="256" text-anchor="middle" dominant-baseline="central">JWT access_token 발급</text></g>
+<g><rect x="430" y="216" width="200" height="52" rx="10" fill="#991b1b"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="530" y="237" text-anchor="middle" dominant-baseline="central">✕ 인증 실패</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fca5a5" x="530" y="256" text-anchor="middle" dominant-baseline="central">401 오류 반환</text></g>
+<line x1="150" y1="268" x2="150" y2="324" stroke="#94a3b8" stroke-width="2"/>
+<line x1="150" y1="324" x2="248" y2="324" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#94a3b8" x="196" y="316" text-anchor="middle">성공 시</text>
+<g><rect x="248" y="300" width="300" height="52" rx="10" fill="#854f0b"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="398" y="321" text-anchor="middle" dominant-baseline="central">대시보드 진입</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fcd34d" x="398" y="340" text-anchor="middle" dominant-baseline="central">토큰 헤더 포함 API 호출</text></g>
+<line x1="398" y1="352" x2="398" y2="380" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2)"/>
+<g><rect x="218" y="380" width="360" height="52" rx="10" fill="#534ab7"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="398" y="401" text-anchor="middle" dominant-baseline="central">대시보드 데이터 로드</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#c4bfee" x="398" y="420" text-anchor="middle" dominant-baseline="central">이벤트 목록 조회 + WebSocket 연결</text></g>
+<text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#94a3b8" x="340" y="540" text-anchor="middle">로그인 → 대시보드 흐름</text>
+</svg>
+</div>
+
+<!-- Flow 3. 감지 → 처리 -->
+<div class="sec-header">03. AI 감지 → 알림 → 관리자 처리 흐름</div>
+<div class="flow-wrap">
+<svg width="100%" viewBox="0 0 680 680">
+<defs>
+  <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<g><rect x="190" y="20" width="300" height="52" rx="10" fill="#534ab7"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="41" text-anchor="middle" dominant-baseline="central">AI 무임승차 감지</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#c4bfee" x="340" y="60" text-anchor="middle" dominant-baseline="central">YOLOv11 + ByteTrack 탐지 완료</text></g>
+<line x1="340" y1="72" x2="340" y2="100" stroke="#94a3b8" stroke-width="2" marker-end="url(#a3)"/>
+<g><rect x="170" y="100" width="340" height="60" rx="10" fill="#185fa5"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="120" text-anchor="middle" dominant-baseline="central">이벤트 생성</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#93c5fd" x="340" y="138" text-anchor="middle" dominant-baseline="central">DB 저장 + WebSocket 브로드캐스트 + S3 업로드</text><rect x="282" y="148" width="116" height="18" rx="4" fill="rgba(255,255,255,0.15)"/><text font-family="JetBrains Mono,monospace" font-size="10" fill="white" x="340" y="157" text-anchor="middle" dominant-baseline="central">POST /api/events/</text></g>
+<line x1="340" y1="160" x2="340" y2="188" stroke="#94a3b8" stroke-width="2" marker-end="url(#a3)"/>
+<g><rect x="190" y="188" width="300" height="52" rx="10" fill="#854f0b"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="209" text-anchor="middle" dominant-baseline="central">관리자 대시보드 알림 수신</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fcd34d" x="340" y="228" text-anchor="middle" dominant-baseline="central">실시간 팝업 알림</text></g>
+<line x1="340" y1="240" x2="340" y2="268" stroke="#94a3b8" stroke-width="2" marker-end="url(#a3)"/>
+<g><rect x="170" y="268" width="340" height="60" rx="10" fill="#185fa5"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="289" text-anchor="middle" dominant-baseline="central">상세보기 확인</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#93c5fd" x="340" y="306" text-anchor="middle" dominant-baseline="central">영상 클립 + 감지 상세 정보 조회</text><rect x="284" y="316" width="112" height="18" rx="4" fill="rgba(255,255,255,0.15)"/><text font-family="JetBrains Mono,monospace" font-size="10" fill="white" x="340" y="325" text-anchor="middle" dominant-baseline="central">GET /api/events/{id}</text></g>
+<!-- 판정 다이아몬드 -->
+<line x1="340" y1="328" x2="340" y2="372" stroke="#94a3b8" stroke-width="2"/>
+<polygon points="340,372 420,408 340,444 260,408" fill="white" stroke="#94a3b8" stroke-width="1.5"/>
+<text font-family="Noto Sans KR,sans-serif" font-size="13" font-weight="600" fill="#1e293b" x="340" y="412" text-anchor="middle" dominant-baseline="central">판정</text>
+<!-- 처리완료 -->
+<line x1="420" y1="408" x2="530" y2="408" stroke="#94a3b8" stroke-width="2" marker-end="url(#a3)"/>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#94a3b8" x="476" y="398" text-anchor="middle">처리완료</text>
+<g><rect x="530" y="382" width="130" height="52" rx="10" fill="#166534"/><text font-family="Noto Sans KR,sans-serif" font-size="13" font-weight="600" fill="white" x="595" y="404" text-anchor="middle" dominant-baseline="central">처리완료 처리</text><rect x="544" y="416" width="102" height="16" rx="3" fill="rgba(255,255,255,0.15)"/><text font-family="JetBrains Mono,monospace" font-size="9" fill="white" x="595" y="424" text-anchor="middle" dominant-baseline="central">PATCH /status</text></g>
+<!-- 오탐 -->
+<line x1="340" y1="444" x2="340" y2="500" stroke="#94a3b8" stroke-width="2" marker-end="url(#a3)"/>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#94a3b8" x="360" y="476" text-anchor="start">오탐</text>
+<g><rect x="190" y="500" width="300" height="52" rx="10" fill="#993c1d"/><text font-family="Noto Sans KR,sans-serif" font-size="14" font-weight="600" fill="white" x="340" y="521" text-anchor="middle" dominant-baseline="central">오탐 신고 접수</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#f4c4a8" x="340" y="540" text-anchor="middle" dominant-baseline="central">오탐신고창으로 이동</text></g>
+<text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#94a3b8" x="340" y="660" text-anchor="middle">AI 감지 → 알림 → 관리자 처리 흐름</text>
+</svg>
+</div>
+
+<!-- Flow 4. 오탐신고 흐름 -->
+<div class="sec-header">04. 오탐신고 흐름</div>
+<div class="flow-wrap">
+<svg width="100%" viewBox="0 0 680 560">
+<defs>
+  <marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<g><rect x="190" y="20" width="300" height="52" rx="10" fill="#475569"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="41" text-anchor="middle" dominant-baseline="central">관리자 알림 확인</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#cbd5e1" x="340" y="60" text-anchor="middle" dominant-baseline="central">대시보드에서 오탐 의심 이벤트 발견</text></g>
+<line x1="340" y1="72" x2="340" y2="100" stroke="#94a3b8" stroke-width="2" marker-end="url(#a4)"/>
+<g><rect x="190" y="100" width="300" height="52" rx="10" fill="#185fa5"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="121" text-anchor="middle" dominant-baseline="central">상세보기 확인</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#93c5fd" x="340" y="140" text-anchor="middle" dominant-baseline="central">영상 클립 + 감지 정보 재확인</text></g>
+<line x1="340" y1="152" x2="340" y2="180" stroke="#94a3b8" stroke-width="2" marker-end="url(#a4)"/>
+<g><rect x="190" y="180" width="300" height="52" rx="10" fill="#993c1d"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="201" text-anchor="middle" dominant-baseline="central">오탐신고창 열기</text><text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#f4c4a8" x="340" y="220" text-anchor="middle" dominant-baseline="central">사건사진 + 오탐 사유 선택</text></g>
+<line x1="340" y1="232" x2="340" y2="260" stroke="#94a3b8" stroke-width="2" marker-end="url(#a4)"/>
+<g><rect x="160" y="260" width="360" height="68" rx="10" fill="#854f0b"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="281" text-anchor="middle" dominant-baseline="central">오탐 사유 선택</text>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fcd34d" x="340" y="299" text-anchor="middle" dominant-baseline="central">정상태그 인식 지연  /  시스템 오류</text>
+<text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#fcd34d" x="340" y="316" text-anchor="middle" dominant-baseline="central">기계 결함  /  기타 직접 작성</text></g>
+<line x1="340" y1="328" x2="340" y2="356" stroke="#94a3b8" stroke-width="2" marker-end="url(#a4)"/>
+<g><rect x="160" y="356" width="360" height="60" rx="10" fill="#166534"/><text font-family="Noto Sans KR,sans-serif" font-size="15" font-weight="600" fill="white" x="340" y="377" text-anchor="middle" dominant-baseline="central">오탐신고 완료</text><text font-family="Noto Sans KR,sans-serif" font-size="11" fill="#86efac" x="340" y="395" text-anchor="middle" dominant-baseline="central">이벤트 상태 변경</text><rect x="248" y="404" width="184" height="16" rx="4" fill="rgba(255,255,255,0.15)"/><text font-family="JetBrains Mono,monospace" font-size="10" fill="white" x="340" y="412" text-anchor="middle" dominant-baseline="central">POST /api/events/{id}/false-alarm</text></g>
+<text font-family="Noto Sans KR,sans-serif" font-size="12" fill="#94a3b8" x="340" y="540" text-anchor="middle">오탐신고 흐름</text>
+</svg>
+</div>
+
+<hr class="page-break">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PART 3. API 연동 가이드 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="part-header">
+  <div class="part-num">PART 03</div>
+  <h2>API 연동 가이드</h2>
+  <p>실제 구현된 백엔드 API 스펙 및 연동 방법</p>
+</div>
+
+<div class="info-box">인증이 필요한 API는 요청 헤더에 반드시 포함: <code>Authorization: Bearer {access_token}</code></div>
+
+<div class="sec-header">01. 인증 (Authentication)</div>
+<table>
+  <thead><tr><th>메서드</th><th>엔드포인트</th><th>인증 필요</th><th>설명</th></tr></thead>
+  <tbody><tr><td><code>POST</code></td><td><code>/api/auth/login</code></td><td>불필요</td><td>관리자 로그인 후 JWT 토큰 발급</td></tr></tbody>
+</table>
+<table>
+  <thead><tr><th>요청 필드</th><th>타입</th><th>필수</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>email</code></td><td>string</td><td>✅</td><td>관리자 이메일</td></tr>
+    <tr><td><code>password</code></td><td>string</td><td>✅</td><td>관리자 비밀번호</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>응답 필드</th><th>타입</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>access_token</code></td><td>string</td><td>JWT 액세스 토큰</td></tr>
+    <tr><td><code>token_type</code></td><td>string</td><td>고정값: bearer</td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">02. 카메라 (Cameras)</div>
+<table>
+  <thead><tr><th>메서드</th><th>엔드포인트</th><th>인증 필요</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/cameras/</code></td><td>✅</td><td>등록된 카메라 전체 목록 조회</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/cameras/</code></td><td>✅</td><td>새 카메라 등록</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/cameras/{camera_id}/toggle</code></td><td>✅</td><td>카메라 활성/비활성 토글</td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">03. 이벤트 (Events)</div>
+<table>
+  <thead><tr><th>메서드</th><th>엔드포인트</th><th>인증 필요</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/events/</code></td><td>✅</td><td>무임승차 이벤트 목록 조회 (최신순)</td></tr>
+    <tr><td><code>POST</code></td><td><code>/api/events/</code></td><td>불필요</td><td>AI 추론 결과로 이벤트 생성 (AI 전용)</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/events/{event_id}/status</code></td><td>✅</td><td>이벤트 상태 수동 업데이트</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>응답 필드</th><th>타입</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>id</code></td><td>integer</td><td>이벤트 고유 ID</td></tr>
+    <tr><td><code>camera_id</code></td><td>integer</td><td>감지된 카메라 ID</td></tr>
+    <tr><td><code>timestamp</code></td><td>datetime</td><td>이벤트 발생 시각 (ISO 8601)</td></tr>
+    <tr><td><code>clip_url</code></td><td>string / null</td><td>S3에 저장된 영상 클립 URL</td></tr>
+    <tr><td><code>track_id</code></td><td>integer / null</td><td>ByteTrack 객체 추적 ID</td></tr>
+    <tr><td><code>confidence</code></td><td>float / null</td><td>AI 감지 신뢰도 (0.0 ~ 1.0)</td></tr>
+    <tr><td><code>status</code></td><td>string</td><td>이벤트 상태값</td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">04. 알림 (Notifications)</div>
+<table>
+  <thead><tr><th>메서드</th><th>엔드포인트</th><th>인증 필요</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/api/notifications/</code></td><td>불필요</td><td>알림 목록 조회 (<code>?unread_only=true</code>로 미읽음만)</td></tr>
+    <tr><td><code>PATCH</code></td><td><code>/api/notifications/{id}/read</code></td><td>불필요</td><td>알림 읽음 처리</td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">05. 실시간 알림 (WebSocket)</div>
+<div class="info-box">엔드포인트: <code>ws://15.135.92.86:8000/ws/events</code><br>무임승차 감지 시 서버가 연결된 모든 클라이언트에 즉시 브로드캐스트합니다.</div>
+<table>
+  <thead><tr><th>수신 필드</th><th>타입</th><th>설명</th></tr></thead>
+  <tbody>
+    <tr><td><code>type</code></td><td>string</td><td>메시지 타입 — NEW_EVENT</td></tr>
+    <tr><td><code>data.id</code></td><td>integer</td><td>이벤트 ID</td></tr>
+    <tr><td><code>data.camera_id</code></td><td>integer</td><td>감지된 카메라 ID</td></tr>
+    <tr><td><code>data.timestamp</code></td><td>datetime</td><td>이벤트 발생 시각</td></tr>
+    <tr><td><code>data.clip_url</code></td><td>string / null</td><td>영상 클립 S3 URL</td></tr>
+    <tr><td><code>data.status</code></td><td>string</td><td>이벤트 초기 상태</td></tr>
+    <tr><td><code>data.confidence</code></td><td>float / null</td><td>AI 감지 신뢰도</td></tr>
+  </tbody>
+</table>
+<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:#431407;line-height:1.8;">
+const ws = new WebSocket('ws://15.135.92.86:8000/ws/events');<br>
+ws.onmessage = (event) => {<br>
+&nbsp;&nbsp;const msg = JSON.parse(event.data);<br>
+&nbsp;&nbsp;if (msg.type === 'NEW_EVENT') {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;addAlertToList(msg.data);  // 대시보드 리스트 업데이트<br>
+&nbsp;&nbsp;}<br>
+};
+</div>
+
+<div class="sec-header">06. M2 연동 우선순위</div>
+<table>
+  <thead><tr><th>우선순위</th><th>기능</th><th>관련 API</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1순위</td><td>로그인 / JWT 인증</td><td><code>POST /api/auth/login</code></td><td>모든 API 연동의 전제조건</td></tr>
+    <tr><td>1순위</td><td>실시간 알림 수신</td><td><code>WebSocket /ws/events</code></td><td>대시보드 핵심 기능</td></tr>
+    <tr><td>1순위</td><td>알림 리스트 조회</td><td><code>GET /api/events/</code></td><td>대시보드 리스트</td></tr>
+    <tr><td>2순위</td><td>이벤트 상세보기</td><td><code>GET /api/events/{id}</code></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>2순위</td><td>처리완료 처리</td><td><code>PATCH /api/events/{id}/status</code></td><td>상세보기 버튼</td></tr>
+    <tr><td>2순위</td><td>오탐신고</td><td><code>POST /api/events/{id}/false-alarm</code></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>3순위</td><td>대시보드 통계</td><td><code>GET /api/events/stats</code></td><td>수근님 구현 요청 필요</td></tr>
+    <tr><td>3순위</td><td>카메라 목록</td><td><code>GET /api/cameras/</code></td><td>설정 화면</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+
+<hr class="page-break">
+
+<div class="part-header" style="background:#0f6e56;">
+  <div class="part-num">PART 04</div>
+  <h2>인프라 현황</h2>
+  <p>담당: 이동근 &nbsp;|&nbsp; M2 작업 기준 (2026.04.01)</p>
+</div>
+
+<div class="sec-header">01. 서버 환경</div>
+<table>
+  <thead><tr><th>항목</th><th>상세</th><th>상태</th></tr></thead>
+  <tbody>
+    <tr><td>클라우드 서버</td><td>AWS EC2 (Ubuntu 24.04 LTS, t3.micro, 시드니 ap-southeast-2)</td><td><span class="badge-done">운영 중</span></td></tr>
+    <tr><td>퍼블릭 IP</td><td><code>15.135.92.86</code></td><td><span class="badge-done">정상</span></td></tr>
+    <tr><td>도메인</td><td><code>https://gateguardsystems.com</code></td><td><span class="badge-done">연결 완료</span></td></tr>
+    <tr><td>API 문서</td><td><code>http://15.135.92.86:8000/docs</code></td><td><span class="badge-done">정상 접속</span></td></tr>
+    <tr><td>Nginx + SSL</td><td>Certbot SSL 발급 완료, 리버스 프록시 설정 중 (태양님)</td><td><span class="badge-todo">진행 중</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">02. Docker 컨테이너 현황</div>
+<table>
+  <thead><tr><th>컨테이너</th><th>이미지</th><th>역할</th><th>상태</th></tr></thead>
+  <tbody>
+    <tr><td><code>gateguard-backend-1</code></td><td>gateguard-backend:latest</td><td>FastAPI API 서버</td><td><span class="badge-done">실행 중</span></td></tr>
+    <tr><td><code>gateguard-worker-1</code></td><td>gateguard-worker:latest</td><td>Celery 비동기 워커</td><td><span class="badge-done">실행 중</span></td></tr>
+    <tr><td><code>gateguard-db-1</code></td><td>timescale/timescaledb:latest-pg16</td><td>TimescaleDB</td><td><span class="badge-done">실행 중</span></td></tr>
+    <tr><td><code>gateguard-redis-1</code></td><td>redis:7-alpine</td><td>Celery 브로커 / 캐시</td><td><span class="badge-done">실행 중</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">03. 보안 그룹 (인바운드 규칙)</div>
+<table>
+  <thead><tr><th>포트</th><th>프로토콜</th><th>용도</th><th>소스</th></tr></thead>
+  <tbody>
+    <tr><td><code>22</code></td><td>TCP</td><td>SSH 접속</td><td>0.0.0.0/0</td></tr>
+    <tr><td><code>80</code></td><td>TCP</td><td>HTTP</td><td>0.0.0.0/0</td></tr>
+    <tr><td><code>443</code></td><td>TCP</td><td>HTTPS</td><td>0.0.0.0/0</td></tr>
+    <tr><td><code>8000</code></td><td>TCP</td><td>FastAPI 직접 접속</td><td>0.0.0.0/0</td></tr>
+  </tbody>
+</table>
+
+<div class="sec-header">04. M2 인프라 작업 현황</div>
+<table>
+  <thead><tr><th>작업</th><th>담당</th><th>상세</th><th>상태</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Docker Log Rotation</td><td>이동근</td>
+      <td>로그 10MB 기준 자동 순환 (최대 3개 유지)<br><code>/etc/docker/daemon.json</code> 설정 완료</td>
+      <td><span class="badge-done">완료</span></td>
+    </tr>
+    <tr>
+      <td>Docker 리소스 자동 정리</td><td>이동근</td>
+      <td>매일 새벽 3시 <code>docker system prune -f</code> 크론잡<br>로그: <code>/var/log/docker-prune.log</code></td>
+      <td><span class="badge-done">완료</span></td>
+    </tr>
+    <tr>
+      <td>PostgreSQL S3 자동 백업</td><td>이동근</td>
+      <td>매일 새벽 2시 DB 덤프 → S3 업로드<br>버킷: <code>gateguard-db-backup-909133988515-ap-northeast-2-an</code><br>스크립트: <code>/usr/local/bin/db-backup.sh</code></td>
+      <td><span class="badge-done">완료</span></td>
+    </tr>
+    <tr>
+      <td>IAM 유저 생성 (S3 백업용)</td><td>이동근</td>
+      <td>유저: <code>gateguard-s3-backup</code><br>정책: S3 PutObject / GetObject / ListBucket 최소 권한</td>
+      <td><span class="badge-done">완료</span></td>
+    </tr>
+    <tr>
+      <td>Nginx + SSL + 도메인</td><td>최태양</td>
+      <td>도메인: <code>https://gateguardsystems.com</code><br>Certbot SSL 인증서 발급 완료, 리버스 프록시 설정 진행 중</td>
+      <td><span class="badge-todo">진행 중</span></td>
+    </tr>
+    <tr>
+      <td>서버 리소스 모니터링</td><td>최태양</td>
+      <td>CPU/Memory 임계치 초과 시 팀장 알림 발송</td>
+      <td><span class="badge-todo">미완료</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sec-header">05. 크론탭 현황 (EC2 서버)</div>
+<div style="background:#0f172a;border-radius:8px;padding:16px 20px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:13px;color:#e2e8f0;line-height:2.2;">
+  <span style="color:#94a3b8"># 매일 새벽 2시 — DB 백업 후 S3 업로드</span><br>
+  <span style="color:#86efac">0 2 * * *</span>&nbsp; /usr/local/bin/db-backup.sh >> /var/log/db-backup.log 2>&amp;1<br><br>
+  <span style="color:#94a3b8"># 매일 새벽 3시 — Docker 불필요 리소스 자동 정리</span><br>
+  <span style="color:#86efac">0 3 * * *</span>&nbsp; docker system prune -f >> /var/log/docker-prune.log 2>&amp;1
+</div>
+
+<div class="info-box">
+  💾 디스크 사용률: <strong>88.1%</strong> (6.71GB 중 약 5.9GB) — Log Rotation 및 Docker 자동 정리로 점진적 개선 예정<br>
+  🔐 보안: IAM 유저 기반 최소 권한 원칙 적용 (루트 액세스 키 미사용)
+</div>
+
+
+
+<div class="footer">
+  GateGuard Team &nbsp;|&nbsp; 경기대학교 AI컴퓨터공학부 캡스톤디자인 2026 &nbsp;|&nbsp; 작성: 이동근 (인프라)
+</div>
+
+</body>
+</html>

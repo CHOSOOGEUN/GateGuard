@@ -12,5 +12,9 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncSession:
+    """
+    [GateGuard] SQLAlchemy 비동기 DB 세션을 생성하고 자동 반납합니다.
+    - FastAPI의 Depends(get_db)를 통해 주입받아 사용합니다.
+    """
     async with AsyncSessionLocal() as session:
         yield session

@@ -1,119 +1,167 @@
 """
-GateGuard 메인 추론 파이프라인
+GateGuard AI 추론 엔트리포인트.
+백엔드가 먼저 떠 있어야 동작합니다 (JWT 검증 대상).
 
-흐름:
-  영상 입력 → 비식별화 → YOLOv11 감지 → ByteTrack 추적
-  → Line Crossing 판정 → 무임승차 이벤트 발생 → 백엔드 API 전송
+실행:
+    python -m ai.inference                       # 기본 카메라(0)
+    python -m ai.inference --source /path/to.mp4 # 영상 파일
+    python -m ai.inference --source 0 --show     # 화면 출력
 """
+import argparse
 import asyncio
-from dataclasses import dataclass, field
+import datetime
+import os
 
-import cv2
 import httpx
-import numpy as np
-import supervision as sv
+from dotenv import load_dotenv
+from jose import jwt
 from ultralytics import YOLO
 
-from ai.anonymizer import FaceAnonymizer
-from ai.tracker import PersonTracker
+from ai.detectors import EfficientNetVerifier, GateDetector, YOLODetector, make_blur_faces
+from ai.pipeline import run_pipeline
+from ai.types import EventCandidate, GateZoneConfig
+
+# ── 환경변수 ─────────────────────────────────────────────────────────────────
+load_dotenv(os.path.join(os.path.dirname(__file__), '../backend/.env'))
+
+SECRET_KEY   = os.getenv("SECRET_KEY", "gateguard-secret-key-dev")
+ALGORITHM    = os.getenv("ALGORITHM", "HS256")
+BACKEND_URL  = os.getenv("BACKEND_URL", "http://localhost:8000")
+CAMERA_ID    = int(os.getenv("CAMERA_ID", "1"))
+
+# ── 로컬 모델/출력 경로 ────────────────────────────────────────────────────
+_DIR          = os.path.dirname(__file__)
+PERSON_MODEL  = os.path.join(_DIR, '../yolo11n.pt')
+GATE_MODEL    = os.path.join(_DIR, 'gate_best.pt')
+FACE_MODEL    = os.path.join(_DIR, 'yolov11n-face.pt')
+EFF_CKPT      = os.getenv("EFF_CHECKPOINT", "")   # 없으면 2차 검증 비활성화
+OUTPUT_DIR    = os.getenv("OUTPUT_DIR", "pipeline_output")
+
+# ── 기본 설정 (카메라/해상도에 맞게 조정) ────────────────────────────────────
+CONFIG_DICT = {
+    'camera_id': f'cam{CAMERA_ID}',
+    'frame_width': 640,
+    'frame_height': 480,
+    'gate_zone':  {'x1': 180, 'y1':  80, 'x2': 460, 'y2': 420},
+    'pass_line':  {'x1': 180, 'y1': 280, 'x2': 460, 'y2': 280},
+    'jump_zone':  {'x1': 160, 'y1':  40, 'x2': 480, 'y2': 180},
+    'crawl_zone': {'x1': 160, 'y1': 340, 'x2': 480, 'y2': 430},
+    'jump_min_frames':            3,
+    'crawl_min_frames':          10,
+    'crawl_aspect_ratio_thresh':  1.6,
+    'tailgate_time_window_s':    3.0,
+    'tailgate_distance_thresh':  150.0,
+    'tailgating_min_frames':       5,
+    'gate_overlap_thresh':         0.25,
+    'tailgate_max_dist':           200,
+}
 
 
-@dataclass
-class GateConfig:
-    """개찰구 라인 설정"""
-    # 감지 경계선 (픽셀 좌표): 게이트를 가로지르는 선
-    line_start: tuple[int, int] = (0, 360)
-    line_end: tuple[int, int] = (640, 360)
-    backend_url: str = "http://localhost:8000"
-    camera_id: int = 1
-    confidence_threshold: float = 0.5
+def generate_master_token() -> str:
+    """AI 엔진이 백엔드에 인증하기 위한 JWT 발급"""
+    expire = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    to_encode = {"sub": "1", "email": "admin@gateguard.com", "exp": expire}
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-@dataclass
-class FareEvasionDetector:
-    config: GateConfig
-    _triggered_ids: set[int] = field(default_factory=set)
-
-    def __post_init__(self):
-        self.model = YOLO("yolo11n.pt")
-        self.anonymizer = FaceAnonymizer()
-        self.tracker = PersonTracker()
-        self.line_zone = sv.LineZone(
-            start=sv.Point(*self.config.line_start),
-            end=sv.Point(*self.config.line_end),
-        )
-        self.line_annotator = sv.LineZoneAnnotator()
-
-    def _to_detections(self, results) -> sv.Detections:
-        detections = sv.Detections.from_ultralytics(results[0])
-        # 사람(class 0)만 필터링
-        mask = (detections.class_id == 0) & (detections.confidence >= self.config.confidence_threshold)
-        return detections[mask]
-
-    async def _report_event(self, track_id: int, confidence: float):
-        payload = {
-            "camera_id": self.config.camera_id,
-            "track_id": track_id,
-            "confidence": round(float(confidence), 4),
-        }
-        async with httpx.AsyncClient() as client:
-            try:
-                await client.post(f"{self.config.backend_url}/api/events", json=payload, timeout=5)
-            except httpx.RequestError as e:
-                print(f"[WARNING] 이벤트 전송 실패: {e}")
-
-    def process_frame(self, frame: np.ndarray) -> tuple[np.ndarray, list[int]]:
-        """
-        단일 프레임 처리.
-        반환: (annotated_frame, 이번 프레임에서 새로 감지된 무임승차 track_id 목록)
-        """
-        frame = self.anonymizer.blur(frame)
-        results = self.model(frame, verbose=False)
-        detections = self._to_detections(results)
-        detections = self.tracker.update(detections)
-
-        crossed_in, crossed_out = self.line_zone.trigger(detections)
-        new_events: list[int] = []
-
-        for i, (in_, out_) in enumerate(zip(crossed_in, crossed_out)):
-            if not (in_ or out_):
-                continue
-            tid = detections.tracker_id[i] if detections.tracker_id is not None else -1
-            if tid in self._triggered_ids:
-                continue
-            self._triggered_ids.add(tid)
-            new_events.append(tid)
-            conf = float(detections.confidence[i]) if detections.confidence is not None else 0.0
-            asyncio.create_task(self._report_event(tid, conf))
-
-        annotated = self.tracker.annotate(frame, detections)
-        annotated = self.line_annotator.annotate(annotated, self.line_zone)
-        return annotated, new_events
-
-    def run(self, source: int | str = 0):
-        """실시간 스트림 실행 (source: 카메라 인덱스 또는 RTSP URL)"""
-        cap = cv2.VideoCapture(source)
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        print(f"[GateGuard] 추론 시작 — 카메라 ID: {self.config.camera_id}")
+async def report_event(candidate: EventCandidate):
+    """감지된 이벤트를 백엔드에 POST"""
+    token = generate_master_token()
+    payload = {
+        "camera_id": CAMERA_ID,
+        "track_id": candidate.track_ids[0] if candidate.track_ids else -1,
+        "confidence": round(float(candidate.confidence), 3),
+        "clip_url": candidate.clip_path or "",
+        "event_type": candidate.event_type,
+    }
+    headers = {"Authorization": f"Bearer {token}"}
+    async with httpx.AsyncClient() as client:
         try:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                annotated, events = self.process_frame(frame)
-                if events:
-                    print(f"[ALERT] 무임승차 감지 — track_ids: {events}")
-                cv2.imshow("GateGuard", annotated)
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
-        finally:
-            cap.release()
-            cv2.destroyAllWindows()
-            loop.close()
+            await client.post(f"{BACKEND_URL}/api/events/", json=payload,
+                              headers=headers, timeout=10)
+            print(f"  🚀 [REPORTED] {candidate.event_type} track={candidate.track_ids}")
+        except Exception as e:
+            print(f"  ⚠️ [REPORT FAILED] {e}")
 
 
-if __name__ == "__main__":
-    detector = FareEvasionDetector(config=GateConfig())
-    detector.run(source=0)
+def load_models():
+    """YOLO + Face + Gate + EfficientNet 모델 로드"""
+    print("[GateGuard] 모델 로딩 중...")
+    person_model = YOLO(PERSON_MODEL)
+    print(f"  Person YOLO: {PERSON_MODEL}")
+
+    gate_model = None
+    if os.path.exists(GATE_MODEL):
+        gate_model = YOLO(GATE_MODEL)
+        print(f"  Gate YOLO: {GATE_MODEL}")
+    else:
+        print(f"  [WARN] gate_best.pt 없음 → gate 위치 필터 비활성화")
+
+    face_model = None
+    if os.path.exists(FACE_MODEL):
+        face_model = YOLO(FACE_MODEL)
+        print(f"  Face YOLO: {FACE_MODEL}")
+    else:
+        try:
+            from huggingface_hub import hf_hub_download
+            face_pt = hf_hub_download(
+                'arnabdhar/YOLOv8-Face-Detection', 'model.pt',
+                local_dir=_DIR)
+            face_model = YOLO(face_pt)
+            print("  Face YOLO: HuggingFace에서 로드")
+        except Exception as e:
+            print(f"  [WARN] 얼굴 모델 로드 실패 → 블러 생략: {e}")
+
+    verifier = EfficientNetVerifier(checkpoint_path=EFF_CKPT or None)
+
+    return (
+        YOLODetector(person_model, conf_threshold=0.4),
+        GateDetector(gate_model, conf_thres=0.25),
+        make_blur_faces(face_model),
+        verifier,
+    )
+
+
+def main():
+    parser = argparse.ArgumentParser(description='GateGuard AI Inference')
+    parser.add_argument('--source', default='0',
+                        help='카메라 인덱스(0) 또는 영상 파일 경로')
+    parser.add_argument('--show', action='store_true',
+                        help='화면 출력 (cv2.imshow)')
+    parser.add_argument('--output-dir', default=OUTPUT_DIR)
+    parser.add_argument('--no-report', action='store_true',
+                        help='백엔드 보고 생략 (테스트용)')
+    args = parser.parse_args()
+
+    source = int(args.source) if args.source.isdigit() else args.source
+
+    person_det, gate_det, blur_fn, verifier = load_models()
+    cfg = GateZoneConfig.from_dict(CONFIG_DICT)
+
+    # 이벤트 발생 시 백엔드 보고 (asyncio 루프 활용)
+    loop = asyncio.new_event_loop()
+
+    def on_event(c: EventCandidate):
+        if not args.no_report:
+            loop.run_until_complete(report_event(c))
+
+    print(f"\n💎 [GATE GUARD] AI INFERENCE LIVE — source={source}")
+
+    try:
+        run_pipeline(
+            video_path=source,
+            cfg_base=cfg,
+            output_dir=args.output_dir,
+            person_detector=person_det,
+            gate_detector=gate_det,
+            blur_faces=blur_fn,
+            verifier=verifier,
+            on_event=on_event,
+            show=args.show,
+        )
+    finally:
+        loop.close()
+
+
+if __name__ == '__main__':
+    main()

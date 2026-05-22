@@ -5,6 +5,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master, develop]
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────
@@ -82,16 +83,50 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # 폴더가 없으면 생성 후 클론, 있으면 진입
+            if [ ! -d "~/GateGuard" ]; then
+              git clone https://github.com/CHOSOOGEUN/GateGuard.git ~/GateGuard
+            fi
+            
             cd ~/GateGuard
 
-            # 최신 코드 pull
-            git pull origin master
+            # 최신 코드 강제 동기화 (충돌 방지)
+            git fetch origin master
+            git reset --hard origin/master
 
-            # 컨테이너 재시작
-            sudo docker compose down
-            sudo docker compose up -d --build
+            # 🔐 GitHub Secrets를 실제 서버의 .env로 주입 (S3 실체화)
+            cat << EOF > backend/.env
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            MASTER_TOKEN=${{ secrets.MASTER_TOKEN }}
+            ALGORITHM=HS256
+            POSTGRES_USER=gateguard
+            POSTGRES_PASSWORD=gateguard
+            POSTGRES_DB=gateguard
+            DATABASE_URL=postgresql+asyncpg://gateguard:gateguard@db:5432/gateguard
+            REDIS_URL=redis://redis:6379/0
+            CELERY_BROKER_URL=redis://redis:6379/0
+            CELERY_RESULT_BACKEND=redis://redis:6379/0
+            DEBUG=False
+            EOF
 
-            # DB 마이그레이션
-            sudo docker exec gateguard-backend-1 alembic upgrade head
+            # 컨테이너 재시작 및 최적화
+            sudo docker compose pull
+            sudo docker compose up -d --build --remove-orphans
+
+            # DB 마이그레이션 (컨테이너 가동 대기 후 실행)
+            sleep 5
+            sudo docker compose exec -T backend alembic upgrade head
 
             echo "✅ 배포 완료: $(date)"
+
+      - name: Notify Deployment Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{\"content\": \"🚀 **GateGuard 배포 성공!**\n🔗 접속 주소: <https://gateguardsystems.com>\n📅 완료 시간: $(date)\"}" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
