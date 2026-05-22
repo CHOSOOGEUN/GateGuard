@@ -5,12 +5,10 @@ import EventsFilter from "@/components/events/EventsFilter";
 import EventsTable from "@/components/events/EventsTable";
 import EventsPagination from "@/components/events/EventsPagination";
 import EventDetailModal from "@/components/dashboard/EventDetailModal";
-import { useAppContext } from "@/hooks/useAppContext";
 import { useEventsPage } from "@/hooks/useEventsPage";
 import type { EventResponse } from "@/types";
 
 export default function EventsPage() {
-  const { setWsConnected } = useAppContext();
   const {
     filters,
     handleFiltersChange,
@@ -25,7 +23,7 @@ export default function EventsPage() {
     stationOptions,
     refetch,
     exportAll,
-  } = useEventsPage(setWsConnected);
+  } = useEventsPage();
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
 
   return (

@@ -1,4 +1,5 @@
 import { Search, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { EVENT_TYPE_OPTIONS } from "@/constants/eventTypes";
 import { DEFAULT_FILTERS, type EventFilters } from "./eventFiltersConfig";
 
@@ -56,6 +57,26 @@ export default function EventsFilter({
   cameraOptions,
   stationOptions,
 }: EventsFilterProps) {
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const filtersRef = useRef(filters);
+  const onChangeRef = useRef(onChange);
+  filtersRef.current = filters;
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const latest = filtersRef.current;
+      if (searchInput !== latest.search) {
+        onChangeRef.current({ ...latest, search: searchInput });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const update = (partial: Partial<EventFilters>) =>
     onChange({ ...filters, ...partial });
 
@@ -76,8 +97,8 @@ export default function EventsFilter({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          value={filters.search}
-          onChange={(e) => update({ search: e.target.value })}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder="EV-번호, 역이름, 게이트, CAM-번호 검색..."
           className="w-full pl-9 pr-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B73F7]"
         />

@@ -15,6 +15,7 @@ export const EVENT_TYPE_OPTIONS = [
   { value: "crawling", label: "기어서 통과" },
   { value: "unpaid", label: "태그 없이 통행" },
   { value: "emergencydoor", label: "비상문 진입" },
+  { value: "unknown", label: "알 수 없음" },
 ];
 
 export function labelEventType(raw: string): string {

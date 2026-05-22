@@ -5,7 +5,6 @@ import { AppContext } from "./appContextDef";
 import type { WsEventListener } from "./appContextDef";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import type { EventResponse } from "@/types";
-import { normalizeEvent } from "@/api/transform";
 import { getEventStats } from "@/api/events";
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -29,7 +28,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const { connected } = useWebSocket((msg) => {
     if (msg.type !== "NEW_EVENT") return;
-    const event = normalizeEvent(msg.data as EventResponse);
+    const event = msg.data as EventResponse;
 
     setUnconfirmedCount((prev) => prev + 1);
 

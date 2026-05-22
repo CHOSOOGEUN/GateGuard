@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getEvents } from "@/api/events";
 import { getCameras } from "@/api/cameras";
-import { useWebSocket } from "./useWebSocket";
+import { useAppContext } from "./useAppContext";
 import type { EventResponse, CameraResponse } from "@/types";
 import { DEFAULT_FILTERS, type EventFilters } from "@/components/events/eventFiltersConfig";
 
@@ -20,7 +20,8 @@ function periodToDates(period: EventFilters["period"]): { date_from?: string; da
   return { date_from: from.toISOString() };
 }
 
-export function useEventsPage(setWsConnected: (v: boolean) => void) {
+export function useEventsPage() {
+  const { subscribeWsEvent } = useAppContext();
   const [filters, setFilters] = useState<EventFilters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
@@ -130,15 +131,11 @@ export function useEventsPage(setWsConnected: (v: boolean) => void) {
     }));
   }, [filters]);
 
-  const { connected } = useWebSocket((msg) => {
-    if (msg.type === "NEW_EVENT") {
-      doFetch(filters, page, pageSize);
-    }
-  });
-
   useEffect(() => {
-    setWsConnected(connected);
-  }, [connected, setWsConnected]);
+    return subscribeWsEvent(() => {
+      doFetch(filters, page, pageSize);
+    });
+  }, [subscribeWsEvent, doFetch, filters, page, pageSize]);
 
   return {
     filters,

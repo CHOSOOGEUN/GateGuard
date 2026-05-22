@@ -1,6 +1,5 @@
 import api from "./axios";
 import type { EventResponse, EventStats, CameraEventStats } from "@/types";
-import { normalizeEvent, normalizeStatusParam } from "./transform";
 
 export const getEvents = (params?: {
   limit?: number;
@@ -11,10 +10,10 @@ export const getEvents = (params?: {
   date_from?: string;
   date_to?: string;
   search?: string;
-}) => api.get<EventResponse[]>("/api/events/", { params: { ...params, status: normalizeStatusParam(params?.status) } }).then((r) => r.data.map(normalizeEvent));
+}) => api.get<EventResponse[]>("/api/events/", { params }).then((r) => r.data);
 
 export const getEventById = (id: number) =>
-  api.get<EventResponse>(`/api/events/${id}`).then((r) => normalizeEvent(r.data));
+  api.get<EventResponse>(`/api/events/${id}`).then((r) => r.data);
 
 export const getEventStats = () =>
   api.get<EventStats>("/api/events/stats").then((r) => r.data);
