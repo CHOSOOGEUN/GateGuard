@@ -8,6 +8,7 @@ import HourlyDistributionChart from "@/components/stats/HourlyDistributionChart"
 import FalseAlarmTable from "@/components/stats/FalseAlarmTable";
 import CameraRankingTable from "@/components/stats/CameraRankingTable";
 import { getEvents, getEventStats, getEventStatsByCamera } from "@/api/events";
+import { getCameras } from "@/api/cameras";
 import {
   buildDailyData,
   buildHourlyData,
@@ -15,7 +16,7 @@ import {
   buildFalseAlarmData,
   DAILY_DAYS,
 } from "@/lib/stats";
-import type { EventResponse, EventStats, CameraEventStats } from "@/types";
+import type { EventResponse, EventStats, CameraEventStats, CameraResponse } from "@/types";
 
 export default function StatsPage() {
   const [events, setEvents] = useState<EventResponse[]>([]);
@@ -26,14 +27,28 @@ export default function StatsPage() {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const [evResult, statsResult, camStatsResult] = await Promise.allSettled([
+      const [evResult, statsResult, camStatsResult, camResult] = await Promise.allSettled([
         getEvents({ limit: 1000 }),
         getEventStats(),
         getEventStatsByCamera(),
+        getCameras(),
       ]);
       if (evResult.status === "fulfilled") setEvents(evResult.value);
       if (statsResult.status === "fulfilled") setStats(statsResult.value);
-      if (camStatsResult.status === "fulfilled") setCameraStats(camStatsResult.value);
+      if (camStatsResult.status === "fulfilled") {
+        const cameraMap = new Map<number, CameraResponse>(
+          camResult.status === "fulfilled"
+            ? camResult.value.map((c) => [c.id, c])
+            : []
+        );
+        setCameraStats(
+          camStatsResult.value.map((s) => ({
+            ...s,
+            station_name: cameraMap.get(s.camera_id)?.station_name ?? `CAM-${s.camera_id}`,
+            location: cameraMap.get(s.camera_id)?.location ?? "",
+          }))
+        );
+      }
       setLoading(false);
     };
     fetch();
@@ -45,11 +60,18 @@ export default function StatsPage() {
   const falseAlarmData = useMemo(() => buildFalseAlarmData(events), [events]);
 
   const avgDaily = useMemo(() => {
-    const days = Object.values(dailyData);
-    const total = days.reduce((s, v) => s + v, 0);
-    const activeDays = days.filter((v) => v > 0).length;
-    return activeDays > 0 ? total / activeDays : null;
-  }, [dailyData]);
+    if (events.length === 0) return null;
+    const timestamps = events.map((e) => new Date(e.timestamp).getTime());
+    const minDay = new Date(Math.min(...timestamps));
+    const maxDay = new Date(Math.max(...timestamps));
+    minDay.setHours(0, 0, 0, 0);
+    maxDay.setHours(0, 0, 0, 0);
+    const totalDays = Math.max(
+      1,
+      Math.round((maxDay.getTime() - minDay.getTime()) / 86400000) + 1,
+    );
+    return events.length / totalDays;
+  }, [events]);
 
   const avgProcessMin = useMemo(() => {
     const handled = events.filter(
@@ -57,7 +79,10 @@ export default function StatsPage() {
     );
     if (handled.length === 0) return null;
     const totalMs = handled.reduce((sum, e) => {
-      return sum + (new Date(e.handled_at!).getTime() - new Date(e.timestamp).getTime());
+      return (
+        sum +
+        (new Date(e.handled_at!).getTime() - new Date(e.timestamp).getTime())
+      );
     }, 0);
     return totalMs / handled.length / 60000; // ms → 분
   }, [events]);
@@ -68,15 +93,30 @@ export default function StatsPage() {
       <div className="flex flex-col flex-1 min-w-0">
         <Header />
         <main className="flex-1 p-3 sm:p-6 space-y-4 sm:space-y-5">
+          {/* 데이터 범위 안내 */}
+          <p className="text-xs text-gray-400">
+            ※ 통계는 최근 수집된 최대 1,000건의 이벤트를 기준으로 산출됩니다.
+          </p>
+
           {/* 요약 카드 */}
-          <StatSummaryCards stats={stats} avgDaily={avgDaily} avgProcessMin={avgProcessMin} loading={loading} />
+          <StatSummaryCards
+            stats={stats}
+            events={events}
+            avgDaily={avgDaily}
+            avgProcessMin={avgProcessMin}
+            loading={loading}
+          />
 
           {/* 일별 추이 + 감지 유형 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">일별 발생 추이</span>
-                <span className="text-xs text-gray-400">최근 {DAILY_DAYS}일</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  일별 발생 추이
+                </span>
+                <span className="text-xs text-gray-400">
+                  최근 {DAILY_DAYS}일
+                </span>
               </div>
               {loading ? (
                 <div className="h-[200px] animate-pulse bg-gray-100 rounded-xl" />
@@ -87,7 +127,9 @@ export default function StatsPage() {
 
             <div className="bg-white rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">감지 유형 비율</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  감지 유형 비율
+                </span>
                 <span className="text-xs text-gray-400">전체 기간</span>
               </div>
               {loading ? (
@@ -102,7 +144,9 @@ export default function StatsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">시간대별 발생 분포</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  시간대별 발생 분포
+                </span>
                 <span className="text-xs text-gray-400">0시 — 23시</span>
               </div>
               {loading ? (
@@ -114,12 +158,17 @@ export default function StatsPage() {
 
             <div className="bg-white rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-semibold text-gray-700">오탐신고 현황</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  오탐신고 현황
+                </span>
               </div>
               {loading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-8 animate-pulse bg-gray-100 rounded" />
+                    <div
+                      key={i}
+                      className="h-8 animate-pulse bg-gray-100 rounded"
+                    />
                   ))}
                 </div>
               ) : (
@@ -131,12 +180,17 @@ export default function StatsPage() {
           {/* 역별/게이트별 발생 순위 */}
           <div className="bg-white rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-gray-700">역별 / 게이트별 발생 순위</span>
+              <span className="text-sm font-semibold text-gray-700">
+                역별 / 게이트별 발생 순위
+              </span>
             </div>
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse bg-gray-100 rounded" />
+                  <div
+                    key={i}
+                    className="h-10 animate-pulse bg-gray-100 rounded"
+                  />
                 ))}
               </div>
             ) : (

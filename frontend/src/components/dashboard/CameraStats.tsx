@@ -10,20 +10,27 @@ export default function CameraStats({ data, loading }: CameraStatsProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm">
-      <h2 className="font-bold text-gray-900 dark:text-white mb-4">역별 알림현황</h2>
+      <h2 className="font-bold text-gray-900 dark:text-white mb-4">
+        역별 알림현황
+      </h2>
       <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700 mb-1">
-        <span className="text-xs font-medium text-[#4B73F7]">역이름</span>
-        <span className="text-xs font-medium text-[#4B73F7]">알림현황</span>
+        <span className="text-xs font-medium text-[#99a1af]">역이름</span>
+        <span className="text-xs font-medium text-[#99a1af]">알림현황</span>
       </div>
 
       {loading ? (
         <div className="space-y-4 pt-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-10 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+            <div
+              key={i}
+              className="h-10 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"
+            />
           ))}
         </div>
       ) : sorted.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-6">데이터가 없습니다.</p>
+        <p className="text-sm text-gray-400 text-center py-6">
+          데이터가 없습니다.
+        </p>
       ) : (
         <div>
           {sorted.map((row) => (

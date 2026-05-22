@@ -1,7 +1,8 @@
-import type { EventStats } from "@/types";
+import type { EventStats, EventResponse } from "@/types";
 
 interface Props {
   stats: EventStats | null;
+  events: EventResponse[];
   avgDaily: number | null;
   avgProcessMin: number | null;
   loading: boolean;
@@ -10,7 +11,7 @@ interface Props {
 const cards = [
   {
     key: "today_total" as const,
-    label: "총 발생 건수",
+    label: "누적 발생 건수",
     color: "text-red-400",
     bg: "bg-red-50",
     suffix: "건",
@@ -38,18 +39,34 @@ const cards = [
   },
 ];
 
-export default function StatSummaryCards({ stats, avgDaily, avgProcessMin, loading }: Props) {
+export default function StatSummaryCards({
+  stats,
+  events,
+  avgDaily,
+  avgProcessMin,
+  loading,
+}: Props) {
   const falseAlarmRate =
-    stats && stats.today_total > 0
-      ? ((stats.false_alarm / stats.today_total) * 100).toFixed(1)
+    events.length > 0
+      ? (
+          (events.filter((e) => e.status === "false_alarm").length /
+            events.length) *
+          100
+        ).toFixed(1)
       : "0.0";
 
   const getValue = (key: (typeof cards)[number]["key"]) => {
-    if (!stats) return "—";
-    if (key === "today_total") return stats.today_total.toString();
-    if (key === "avg_daily") return avgDaily !== null ? avgDaily.toFixed(1) : "—";
+    if (key === "today_total")
+      return events.length > 0
+        ? events.length.toString()
+        : stats
+          ? stats.today_total.toString()
+          : "—";
+    if (key === "avg_daily")
+      return avgDaily !== null ? avgDaily.toFixed(1) : "—";
     if (key === "false_alarm_rate") return falseAlarmRate;
-    if (key === "avg_process") return avgProcessMin !== null ? avgProcessMin.toFixed(1) : "—";
+    if (key === "avg_process")
+      return avgProcessMin !== null ? avgProcessMin.toFixed(1) : "—";
     return "—";
   };
 
@@ -57,7 +74,10 @@ export default function StatSummaryCards({ stats, avgDaily, avgProcessMin, loadi
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
-          <div key={c.key} className="bg-white rounded-2xl p-4 animate-pulse h-24" />
+          <div
+            key={c.key}
+            className="bg-white rounded-2xl p-4 animate-pulse h-24"
+          />
         ))}
       </div>
     );
