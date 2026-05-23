@@ -1,8 +1,8 @@
 import re
 from typing import Optional
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, or_
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy import select, or_, extract
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/events", tags=["events"])
 
 @router.get("/", response_model=list[EventResponse])
 async def list_events(
+    response: Response,
     camera_id: Optional[int] = None,
     status: Optional[str] = None,
     type: Optional[str] = None,
@@ -94,6 +95,11 @@ async def list_events(
             conds.append(Event.id == int(search_q))
         query = query.where(or_(*conds))
 
+    # 필터링된 전체 건수를 X-Total-Count 헤더로 노출 (페이지네이션 메타)
+    # CORS expose 는 main.py 의 CORSMiddleware(expose_headers=...) 에서 처리
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
+    response.headers["X-Total-Count"] = str(total or 0)
+
     query = query.order_by(Event.timestamp.desc()).offset(offset).limit(limit)
 
     result = await db.execute(query)
@@ -130,6 +136,59 @@ async def get_camera_stats(
     query = select(Event.camera_id, func.count(Event.id).label("count")).group_by(Event.camera_id)
     result = await db.execute(query)
     return [{"camera_id": row.camera_id, "count": row.count} for row in result.all()]
+
+
+@router.get("/stats/by-type")
+async def get_stats_by_type(
+    db: AsyncSession = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+):
+    """이벤트 유형별 집계 (StatsPage EventTypeChart 용)."""
+    q = (
+        select(Event.event_type, func.count(Event.id).label("count"))
+        .group_by(Event.event_type)
+        .order_by(func.count(Event.id).desc())
+    )
+    result = await db.execute(q)
+    return [{"event_type": row.event_type, "count": row.count} for row in result.all()]
+
+
+@router.get("/stats/hourly")
+async def get_stats_hourly(
+    db: AsyncSession = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+):
+    """시간대(0~23)별 발생 건수 (StatsPage HourlyDistributionChart 용).
+    date_from/date_to 로 기간 제한 가능 (기본: 전체)."""
+    hour_col = extract("hour", Event.timestamp).label("hour")
+    q = select(hour_col, func.count(Event.id).label("count")).group_by(hour_col).order_by(hour_col)
+    if date_from:
+        q = q.where(Event.timestamp >= date_from)
+    if date_to:
+        q = q.where(Event.timestamp <= date_to)
+    result = await db.execute(q)
+    return [{"hour": int(row.hour), "count": row.count} for row in result.all()]
+
+
+@router.get("/stats/daily")
+async def get_stats_daily(
+    db: AsyncSession = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+    days: int = 30,
+):
+    """최근 N일(기본 30일) 일자별 발생 건수 (StatsPage DailyTrendChart 용)."""
+    cutoff = datetime.now() - timedelta(days=max(days, 1))
+    day_col = func.date(Event.timestamp).label("day")
+    q = (
+        select(day_col, func.count(Event.id).label("count"))
+        .where(Event.timestamp >= cutoff)
+        .group_by(day_col)
+        .order_by(day_col)
+    )
+    result = await db.execute(q)
+    return [{"day": str(row.day), "count": row.count} for row in result.all()]
 
 
 @router.get("/{event_id}", response_model=EventResponse)
