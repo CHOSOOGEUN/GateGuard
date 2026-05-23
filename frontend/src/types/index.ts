@@ -41,6 +41,26 @@ export interface CameraEventStats {
   count: number;
 }
 
+// 서버 통계 3종 (PR #31)
+export interface EventTypeStat {
+  event_type: string;
+  count: number;
+}
+export interface HourlyStat {
+  hour: number; // 0..23
+  count: number;
+}
+export interface DailyStat {
+  day: string; // YYYY-MM-DD
+  count: number;
+}
+
+// 페이지네이션 메타가 붙은 events 응답 (X-Total-Count 헤더 활용)
+export interface EventsPagedResult {
+  items: EventResponse[];
+  total: number;
+}
+
 export interface NotificationResponse {
   id: number;
   event_id: number;

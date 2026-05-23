@@ -19,6 +19,8 @@ export default function EventsPage() {
     pageSize,
     setPageSize,
     hasNextPage,
+    total,
+    totalPages,
     cameraOptions,
     stationOptions,
     refetch,
@@ -49,6 +51,8 @@ export default function EventsPage() {
               page={page}
               pageSize={pageSize}
               hasNextPage={hasNextPage}
+              totalPages={totalPages}
+              total={total}
               onPageChange={setPage}
               onPageSizeChange={setPageSize}
             />
