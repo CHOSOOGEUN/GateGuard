@@ -7,34 +7,61 @@ import EventTypeChart from "@/components/stats/EventTypeChart";
 import HourlyDistributionChart from "@/components/stats/HourlyDistributionChart";
 import FalseAlarmTable from "@/components/stats/FalseAlarmTable";
 import CameraRankingTable from "@/components/stats/CameraRankingTable";
-import { getEvents, getEventStats, getEventStatsByCamera } from "@/api/events";
-import { getCameras } from "@/api/cameras";
 import {
-  buildDailyData,
-  buildHourlyData,
-  buildTypeData,
-  buildFalseAlarmData,
-  DAILY_DAYS,
-} from "@/lib/stats";
-import type { EventResponse, EventStats, CameraEventStats, CameraResponse } from "@/types";
+  getEvents,
+  getEventStats,
+  getEventStatsByCamera,
+  getEventStatsByType,
+  getEventStatsHourly,
+  getEventStatsDaily,
+} from "@/api/events";
+import { getCameras } from "@/api/cameras";
+import { buildFalseAlarmData, DAILY_DAYS } from "@/lib/stats";
+import { labelEventType } from "@/constants/eventTypes";
+import type {
+  EventResponse,
+  EventStats,
+  CameraEventStats,
+  CameraResponse,
+  EventTypeStat,
+  HourlyStat,
+  DailyStat,
+} from "@/types";
+
+const HOUR_SLOTS = [
+  "00-02", "02-04", "04-06", "06-08", "08-10", "10-12",
+  "12-14", "14-16", "16-18", "18-20", "20-22", "22-24",
+];
 
 export default function StatsPage() {
+  // falseAlarm reason 집계 + 평균값 계산용 (서버 엔드포인트 없음)
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [stats, setStats] = useState<EventStats | null>(null);
   const [cameraStats, setCameraStats] = useState<CameraEventStats[]>([]);
+  // 서버 집계 결과 (PR #31)
+  const [typeStats, setTypeStats] = useState<EventTypeStat[]>([]);
+  const [hourlyStats, setHourlyStats] = useState<HourlyStat[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const [evResult, statsResult, camStatsResult, camResult] = await Promise.allSettled([
-        getEvents({ limit: 1000 }),
-        getEventStats(),
-        getEventStatsByCamera(),
-        getCameras(),
-      ]);
+      const [evResult, statsResult, camStatsResult, camResult, typeResult, hourlyResult, dailyResult] =
+        await Promise.allSettled([
+          getEvents({ limit: 1000 }),
+          getEventStats(),
+          getEventStatsByCamera(),
+          getCameras(),
+          getEventStatsByType(),
+          getEventStatsHourly(),
+          getEventStatsDaily(DAILY_DAYS),
+        ]);
       if (evResult.status === "fulfilled") setEvents(evResult.value);
       if (statsResult.status === "fulfilled") setStats(statsResult.value);
+      if (typeResult.status === "fulfilled") setTypeStats(typeResult.value);
+      if (hourlyResult.status === "fulfilled") setHourlyStats(hourlyResult.value);
+      if (dailyResult.status === "fulfilled") setDailyStats(dailyResult.value);
       if (camStatsResult.status === "fulfilled") {
         const cameraMap = new Map<number, CameraResponse>(
           camResult.status === "fulfilled"
@@ -56,9 +83,44 @@ export default function StatsPage() {
     fetch();
   }, []);
 
-  const dailyData = useMemo(() => buildDailyData(events), [events]);
-  const hourlyData = useMemo(() => buildHourlyData(events), [events]);
-  const typeData = useMemo(() => buildTypeData(events), [events]);
+  // 일별 추이 — 서버 응답을 `MM/DD` 키 record 로 변환 (최근 DAILY_DAYS 일)
+  const dailyData = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (let i = DAILY_DAYS - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      result[`${d.getMonth() + 1}/${d.getDate()}`] = 0;
+    }
+    dailyStats.forEach((s) => {
+      const d = new Date(s.day);
+      const key = `${d.getMonth() + 1}/${d.getDate()}`;
+      if (key in result) result[key] = s.count;
+    });
+    return result;
+  }, [dailyStats]);
+
+  // 시간대(서버 0~23) → 2시간 슬롯 record 로 합산
+  const hourlyData = useMemo(() => {
+    const result: Record<string, number> = Object.fromEntries(HOUR_SLOTS.map((s) => [s, 0]));
+    hourlyStats.forEach((h) => {
+      const start = Math.floor(h.hour / 2) * 2;
+      const key = `${String(start).padStart(2, "0")}-${String(start + 2).padStart(2, "0")}`;
+      if (key in result) result[key] += h.count;
+    });
+    return result;
+  }, [hourlyStats]);
+
+  // event_type → 한글 label
+  const typeData = useMemo(() => {
+    const result: Record<string, number> = {};
+    typeStats.forEach((t) => {
+      const label = labelEventType(t.event_type);
+      result[label] = (result[label] ?? 0) + t.count;
+    });
+    return result;
+  }, [typeStats]);
+
+  // 오탐 reason 집계 — 서버 엔드포인트 없어 events 1000건 기준 클라 집계
   const falseAlarmData = useMemo(() => buildFalseAlarmData(events), [events]);
 
   const avgDaily = useMemo(() => {
@@ -97,7 +159,7 @@ export default function StatsPage() {
         <main className="flex-1 p-3 sm:p-6 space-y-4 sm:space-y-5">
           {/* 데이터 범위 안내 */}
           <p className="text-xs text-gray-400">
-            ※ 통계는 최근 수집된 최대 1,000건의 이벤트를 기준으로 산출됩니다.
+            ※ 차트(일별·시간대별·유형별)는 서버에서 전체 데이터 기준으로 집계됩니다. 오탐 사유·평균 처리시간은 최근 1,000건 기준.
           </p>
 
           {/* 요약 카드 */}

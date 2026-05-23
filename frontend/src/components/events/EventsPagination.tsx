@@ -4,6 +4,8 @@ interface EventsPaginationProps {
   page: number;
   pageSize: number;
   hasNextPage: boolean;
+  totalPages?: number; // PR #31 — X-Total-Count 기반. 있으면 "page/total" 표시
+  total?: number;       // 전체 건수
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }
@@ -14,13 +16,17 @@ export default function EventsPagination({
   page,
   pageSize,
   hasNextPage,
+  totalPages,
+  total,
   onPageChange,
   onPageSizeChange,
 }: EventsPaginationProps) {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-0 sm:justify-between py-1">
       <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-        {page}페이지
+        {totalPages != null
+          ? `${page} / ${totalPages} 페이지${total != null ? ` (총 ${total.toLocaleString()}건)` : ""}`
+          : `${page}페이지`}
       </p>
 
       <div className="flex items-center gap-2">

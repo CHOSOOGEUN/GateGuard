@@ -75,11 +75,14 @@ class FarewellEvasionDetector:
         # 1. 일단 사건 발생 동시 보고
         local_clip_path = self._save_clip(clip_frames, f"{track_id}_{int(datetime.datetime.now().timestamp())}")
         
+        # 분류기(ai/classifier) 학습 전이라 line crossing 트리거를 단순 placeholder 로 매핑.
+        # 학습 후 EfficientNet 분류 결과(jump/crawling/tailgating/unpaid)로 교체.
         payload = {
             "camera_id": self.config.camera_id,
             "track_id": track_id,
             "confidence": round(float(confidence), 3),
-            "clip_url": local_clip_path
+            "clip_url": local_clip_path,
+            "event_type": "unpaid",
         }
         
         headers = {"Authorization": f"Bearer {token}"}

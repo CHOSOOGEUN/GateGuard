@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { getEvents } from "@/api/events";
+import { getEvents, getEventsPaged } from "@/api/events";
 import { getCameras } from "@/api/cameras";
 import { useAppContext } from "./useAppContext";
 import type { EventResponse, CameraResponse } from "@/types";
@@ -27,6 +27,7 @@ export function useEventsPage() {
   const [pageSize, setPageSize] = useState(8);
   const [rawEvents, setRawEvents] = useState<EventResponse[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const cameraMapRef = useRef<Map<number, CameraResponse>>(new Map());
   const [cameras, setCameras] = useState<CameraResponse[]>([]);
@@ -51,21 +52,23 @@ export function useEventsPage() {
   const doFetch = useCallback(async (f: EventFilters, p: number, ps: number) => {
     setLoading(true);
     const { date_from, date_to } = periodToDates(f.period);
-    const params: Parameters<typeof getEvents>[0] = {
-      limit: ps + 1, // 다음 페이지 존재 여부 판단용 +1
+    const params: Parameters<typeof getEventsPaged>[0] = {
+      limit: ps,
       offset: (p - 1) * ps,
       ...(f.status ? { status: f.status } : {}),
       ...(f.type ? { type: f.type } : {}),
       ...(f.cameraId ? { camera_id: Number(f.cameraId) } : {}),
+      ...(f.station ? { station: f.station } : {}),  // PR #30 — 백엔드 서버사이드 필터
       ...(date_from ? { date_from } : {}),
       ...(date_to ? { date_to } : {}),
       ...(f.search ? { search: f.search } : {}),
     };
     try {
-      const result = await getEvents(params);
-      setHasNextPage(result.length > ps);
+      const { items, total: t } = await getEventsPaged(params);
+      setTotal(t);
+      setHasNextPage(p * ps < t);
       setRawEvents(
-        result.slice(0, ps).map((e) => ({
+        items.map((e) => ({
           ...e,
           camera: cameraMapRef.current.get(e.camera_id) ?? e.camera,
         }))
@@ -89,13 +92,12 @@ export function useEventsPage() {
     setPage(1);
   }, []);
 
-  // station: 백엔드 파라미터 미지원 → 현재 페이지 내 클라이언트 필터
-  const displayEvents = useMemo(() => {
-    if (!filters.station) return rawEvents;
-    return rawEvents.filter(
-      (e) => e.camera?.station_name === filters.station
-    );
-  }, [rawEvents, filters.station]);
+  // station 필터는 백엔드(PR #30)에서 처리되므로 클라 후필터 불필요
+  const displayEvents = rawEvents;
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / pageSize)),
+    [total, pageSize]
+  );
 
   const cameraOptions = useMemo(
     () =>
@@ -119,6 +121,7 @@ export function useEventsPage() {
       ...(filters.status ? { status: filters.status } : {}),
       ...(filters.type ? { type: filters.type } : {}),
       ...(filters.cameraId ? { camera_id: Number(filters.cameraId) } : {}),
+      ...(filters.station ? { station: filters.station } : {}),
       ...(date_from ? { date_from } : {}),
       ...(date_to ? { date_to } : {}),
       ...(filters.search ? { search: filters.search } : {}),
@@ -146,6 +149,8 @@ export function useEventsPage() {
     pageSize,
     setPageSize: handleSetPageSize,
     hasNextPage,
+    total,
+    totalPages,
     cameraOptions,
     stationOptions,
     refetch: () => doFetch(filters, page, pageSize),

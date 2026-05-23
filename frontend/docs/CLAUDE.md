@@ -59,9 +59,8 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 ### Data Flow (EventsPage)
 
 - `src/hooks/useEventsPage.ts` 단일 훅이 데이터·필터·페이지네이션 모두 담당
-- **서버사이드 필터**: `status`, `type`, `camera_id`, `date_from`/`date_to`, `search` → 백엔드 전송
-- **서버사이드 페이지네이션**: `offset=(page-1)*pageSize`, `limit=pageSize+1` (hasNextPage 감지)
-- **클라이언트 필터**: `station` → 현재 페이지 내에서만 적용 (백엔드 `station` 파라미터 미지원)
+- **서버사이드 필터**: `status`, `type`, `camera_id`, `station`, `date_from`/`date_to`, `search` → 백엔드 전송
+- **서버사이드 페이지네이션**: `offset=(page-1)*pageSize`, `limit=pageSize`. 응답 헤더 `X-Total-Count` 로 총 건수 받아 `totalPages` 계산 (`getEventsPaged` 사용)
 - `search` 입력 400ms 디바운스 적용 (`EventsFilter` 로컬 state → 지연 후 onChange 호출)
 - WebSocket `NEW_EVENT` → AppContext `subscribeWsEvent` 구독 (전용 WS 연결 없음)
 - WebSocket 수신 시 현재 필터+페이지 그대로 서버 re-fetch
@@ -132,7 +131,6 @@ Dashboard pages share a consistent layout: `<Sidebar />` (left, fixed w-64) + `<
 
 - `GET /api/notifications/` — 알림 목록 ✅ 프론트 연동
 - `PATCH /api/notifications/{notification_id}/read` — 읽음 처리 ✅ 프론트 연동
-- `POST /api/notifications/read-all` — 전체 읽음 처리 (프론트 미사용)
 
 ### GET /api/events/ 응답 필드
 
@@ -193,16 +191,15 @@ AI 분류기 실제 CLASSES: `tailgating | jump | crawling | unpaid` (4종만 �
   - FalseAlarmModal — `onSubmitted(reason)` 으로 reason 반환
   - WebSocket NEW_EVENT 시 stats + cameraStats 낙관적 업데이트
 - EventsPage (전체 발생내역)
-  - 서버사이드 필터: status, type, camera_id, 기간(date_from/date_to), search
-  - 서버사이드 페이지네이션: offset+limit, hasNextPage 방식
-  - 클라이언트 필터: station (현재 페이지 내, 백엔드 파라미터 대기 중)
+  - 서버사이드 필터: status, type, camera_id, station, 기간(date_from/date_to), search
+  - 서버사이드 페이지네이션: offset+limit, X-Total-Count 헤더 기반 totalPages 표시
   - search 입력 400ms 디바운스
   - WebSocket NEW_EVENT → AppContext subscribeWsEvent 경유 re-fetch (전용 WS 없음)
   - CSV 내보내기 → limit=10000 전체 재조회 후 export
   - EventDetailModal 재사용
   - 테이블 table-fixed 레이아웃 — 페이지 이동 시 컬럼 너비 고정
   - 담당자 컬럼: handled_by (숫자 ID) 표시
-- StatsPage (ECharts 통계 시각화) — 최근 1000건 기준
+- StatsPage (ECharts 통계 시각화) — 차트는 서버 집계(`/stats/by-type|hourly|daily`), 오탐 사유·평균 처리시간은 events 1000건 기준
   - StatSummaryCards — 누적발생(events.length)/일평균/오탐율/평균처리시간 4개 카드 (모두 events 배열 기준)
   - DailyTrendChart — 최근 12일 라인 차트
   - EventTypeChart — 감지 유형 비율 도넛 차트 (event_type 데이터 없으면 "데이터 없음")
@@ -220,18 +217,10 @@ AI 분류기 실제 CLASSES: `tailgating | jump | crawling | unpaid` (4종만 �
 
 1. **역무원 파견** — confirm 후 버튼 비활성화(`dispatched` 로컬 state)까지만 구현. 백엔드 API 없어서 실제 파견 처리 불가. 모달 닫고 재열면 파견 상태 리셋됨
 
-### 백엔드 추가 요청 대기 중
+### 백엔드 연동 완료 (PR #30, #31)
 
-- `GET /api/cameras/` ORDER BY id 추가 — 현재 정렬 기준 없어 새로고침마다 순서 변동
-- `GET /api/events/`에 `station: Optional[str]` 파라미터 추가 → 완료되면 `useEventsPage.ts` 클라이언트 필터 제거
-- `GET /api/events/` 응답에 `total` 필드 추가 → 완료되면 `EventsPagination` 페이지 번호 목록 표시 가능
-- `GET /api/events/stats/daily` — 날짜별 발생 건수 (`days: int = 12`) → 완료되면 DailyTrendChart 1000건 제한 해소
-- `GET /api/events/stats/hourly` — 시간대별 발생 건수 → 완료되면 HourlyDistributionChart 1000건 제한 해소
-- 비활성 카메라(`is_active=false`) 이벤트 수신 시 `400` 반환 처리 추가
-
-### 백엔드 완료되면 프론트 후속 작업 필요한 것들
-
-- station 파라미터 → useEventsPage.ts 클라이언트 필터 제거
-- total 필드 → getEvents 반환 타입 변경 + EventsPagination 페이지 번호 UI 구현
-- stats/daily, stats/hourly → StatsPage fetch 교체,
-  buildDailyData/buildHourlyData 제거
+- ✅ `GET /api/cameras/` ORDER BY id (PR #30)
+- ✅ `GET /api/events/?station=<역이름>` 서버사이드 필터 (PR #30 / useEventsPage 가 직접 전달)
+- ✅ `GET /api/events/` 응답 `X-Total-Count` 헤더 (PR #31 / `getEventsPaged`)
+- ✅ `GET /api/events/stats/by-type` `stats/hourly` `stats/daily?days=N` (PR #31 / StatsPage 차트는 서버 집계 사용)
+- ✅ 비활성 카메라 이벤트 거부 — 미존재 404 / `is_active=false` 400 (PR #30)
