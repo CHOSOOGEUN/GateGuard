@@ -1,20 +1,3 @@
-/**
- * @file components/dashboard/FalseAlarmModal.tsx
- * @description 오탐신고 모달 컴포넌트
- *
- * ## 기능
- * - 오탐 사유 4가지 라디오 선택 (기타 선택 시 직접 입력)
- * - POST /api/events/{id}/false-alarm { reason, memo? } 호출 후 닫기
- * - AlertItem 또는 EventDetailModal의 오탐신고 버튼으로 진입
- *
- * ## 주의사항
- * - 오탐신고 완료 후 onSubmitted() 콜백으로 DashboardPage/EventsPage의 refresh() 호출
- * - POST /api/events/{id}/false-alarm 백엔드 M2 구현 예정
- *
- * ## 백엔드 확정 후 수정 필요
- * - 요청 바디 필드명 ({ reason, memo? }) 확정 필요
- */
-
 import { useState } from "react";
 import { X } from "lucide-react";
 import type { EventResponse } from "@/types";
@@ -23,7 +6,7 @@ import { reportFalseAlarm } from "@/api/events";
 interface FalseAlarmModalProps {
   event: EventResponse;
   onClose: () => void;
-  onSubmitted: () => void;
+  onSubmitted: (reason: string) => void;
 }
 
 const REASONS = [
@@ -60,11 +43,8 @@ export default function FalseAlarmModal({
     setLoading(true);
     try {
       const reason = selectedReason === "기타" ? memo.trim() : selectedReason;
-      await reportFalseAlarm(event.id, {
-        reason,
-        memo: selectedReason === "기타" ? memo.trim() : undefined,
-      });
-      onSubmitted();
+      await reportFalseAlarm(event.id, { reason });
+      onSubmitted(reason);
       onClose();
     } catch {
       setError("오탐 신고 중 오류가 발생했습니다.");
@@ -84,7 +64,9 @@ export default function FalseAlarmModal({
       >
         {/* 헤더 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="font-bold text-gray-900 dark:text-white text-lg">오탐신고</h2>
+          <h2 className="font-bold text-gray-900 dark:text-white text-lg">
+            오탐신고
+          </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
@@ -110,13 +92,19 @@ export default function FalseAlarmModal({
         <div className="px-6 py-5 space-y-4">
           {/* 이벤트 요약 */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-xl px-4 py-3">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{locationText}</p>
-            <p className="text-xs mt-0.5 text-gray-400 dark:text-gray-400">이벤트 #{event.id}</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              {locationText}
+            </p>
+            <p className="text-xs mt-0.5 text-gray-400 dark:text-gray-400">
+              Event #{event.id}
+            </p>
           </div>
 
           {/* 오탐 사유 선택 */}
           <div className="space-y-2.5">
-            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">오탐 사유</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              오탐 사유
+            </p>
             {REASONS.map((reason) => (
               <label
                 key={reason}
@@ -130,7 +118,9 @@ export default function FalseAlarmModal({
                   onChange={() => setSelectedReason(reason)}
                   className="accent-[#4B73F7] w-4 h-4"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{reason}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {reason}
+                </span>
               </label>
             ))}
           </div>

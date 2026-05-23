@@ -1,45 +1,57 @@
-/**
- * @file contexts/AppContext.tsx
- * @description 앱 전역 상태 컨텍스트
- *
- * ## 공유 상태
- * - wsConnected: WebSocket 연결 여부 → Header 실시간 모니터링 뱃지 on/off
- * - unconfirmedCount: 미확인 이벤트 수 → Sidebar 빨간 뱃지
- *
- * ## 사용처
- * - wsConnected 설정: DashboardPage, EventsPage (useWebSocket 연결 시)
- * - unconfirmedCount 설정: DashboardPage
- * - 읽기: Header (wsConnected), Sidebar (unconfirmedCount)
- */
-
-import { createContext, useContext, useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { ReactNode } from "react";
-
-interface AppContextValue {
-  wsConnected: boolean;
-  setWsConnected: (v: boolean) => void;
-  unconfirmedCount: number;
-  setUnconfirmedCount: (v: number) => void;
-}
-
-const AppContext = createContext<AppContextValue>({
-  wsConnected: false,
-  setWsConnected: () => {},
-  unconfirmedCount: 0,
-  setUnconfirmedCount: () => {},
-});
+import { toast } from "sonner";
+import { AppContext } from "./appContextDef";
+import type { WsEventListener } from "./appContextDef";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import type { EventResponse } from "@/types";
+import { getEventStats } from "@/api/events";
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [wsConnected, setWsConnected] = useState(false);
   const [unconfirmedCount, setUnconfirmedCount] = useState(0);
+  const [loggedIn, setLoggedIn] = useState(
+    () => !!(localStorage.getItem("token") || sessionStorage.getItem("token")),
+  );
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    getEventStats().then((stats) => setUnconfirmedCount(stats.pending)).catch(() => {});
+  }, [loggedIn]);
+  const listenersRef = useRef<Set<WsEventListener>>(new Set());
+
+  const subscribeWsEvent = useCallback((cb: WsEventListener) => {
+    listenersRef.current.add(cb);
+    return () => {
+      listenersRef.current.delete(cb);
+    };
+  }, []);
+
+  const { connected } = useWebSocket((msg) => {
+    if (msg.type !== "NEW_EVENT") return;
+    const event = msg.data as EventResponse;
+
+    setUnconfirmedCount((prev) => prev + 1);
+
+    toast.error("새로운 이벤트 감지됨", {
+      description: "대시보드에서 확인하세요.",
+      duration: 5000,
+    });
+
+    listenersRef.current.forEach((cb) => cb(event));
+  }, loggedIn);
 
   return (
     <AppContext.Provider
-      value={{ wsConnected, setWsConnected, unconfirmedCount, setUnconfirmedCount }}
+      value={{
+        wsConnected: connected,
+        setWsConnected: () => {},
+        unconfirmedCount,
+        setUnconfirmedCount,
+        subscribeWsEvent,
+        setLoggedIn,
+      }}
     >
       {children}
     </AppContext.Provider>
   );
 }
-
-export const useAppContext = () => useContext(AppContext);

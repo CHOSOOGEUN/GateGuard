@@ -1,25 +1,20 @@
-/**
- * @file Header.tsx
- * @description 대시보드 헤더 컴포넌트
- *
- * ## 기능
- * - 현재 경로 기반 페이지 타이틀 자동 표시
- * - AppContext의 wsConnected 상태에 따라 실시간 모니터링 뱃지 on(초록)/off(회색) 전환
- * - 톱니바퀴 아이콘 클릭 시 /settings 이동
- * - 다크모드: OS/브라우저 prefers-color-scheme 자동 연동 (수동 토글 없음)
- *
- * ## 주의사항
- * - 프로필 아바타는 하드코딩 ("관"), API 사용자 정보 연동 미구현
- *
- * ## TODO
- * - [ ] 프로필 아바타 → API 사용자 정보로 교체
- */
-
 import { Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAppContext } from "@/contexts/AppContext";
+import { useAppContext } from "@/hooks/useAppContext";
+
+function getAvatarLabel(): string {
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  if (!token) return "관";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const id: string = payload.employee_id ?? "";
+    return id.charAt(0).toUpperCase() || "관";
+  } catch {
+    return "관";
+  }
+}
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "대시보드",
@@ -33,6 +28,7 @@ export default function Header() {
   const navigate = useNavigate();
   const { wsConnected } = useAppContext();
   const title = pageTitles[pathname] ?? "대시보드";
+  const avatarLabel = getAvatarLabel();
 
   return (
     <header className="h-16 lg:h-20 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between px-4 lg:px-8">
@@ -65,7 +61,7 @@ export default function Header() {
         {/* 프로필 아바타 */}
         <Avatar className="w-10 h-10">
           <AvatarFallback className="bg-[#4B73F7] text-white text-sm font-bold">
-            관
+            {avatarLabel}
           </AvatarFallback>
         </Avatar>
       </div>

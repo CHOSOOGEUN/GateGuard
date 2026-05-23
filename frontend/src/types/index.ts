@@ -1,15 +1,3 @@
-/**
- * @file types/index.ts
- * @description 앱 전체 공유 TypeScript 인터페이스 정의
- *
- * ## 주의사항
- * - description, appearance_tags 는 백엔드 응답에 포함 시 자동 활용, 없으면 fallback 처리
- * - camera, event 필드는 백엔드 embed 여부에 따라 활용
- *
- * ## 백엔드 확정 후 수정 필요
- * - description, appearance_tags 필드 포함 여부 확인 필요 (현재 optional로 선언, 없으면 fallback 처리)
- */
-
 export interface CameraResponse {
   id: number;
   location: string;
@@ -31,8 +19,11 @@ export interface EventResponse {
   description?: string; // AI 분석 설명 / 감지 유형 텍스트 (백엔드 응답에 포함 시 활용)
   appearance_tags?: string[]; // 인상착의 태그 (백엔드 응답에 포함 시 활용)
   camera?: CameraResponse; // 프론트에서 카메라 API 조인 후 주입 (백엔드 응답에는 camera_id만 있음)
-  event_type?: string; // 감지유형 (예: '태그 없이 통행', '테일게이팅') — 백엔드 확정 필요
-  assigned_to?: string; // 담당자 — 백엔드 확정 필요
+  event_type?: string; // 감지유형 영문값 (tailgating | jump | crawling | unpaid | emergencydoor | normal | unknown)
+  assigned_to?: string; // 담당자
+  reason?: string | null; // 오탐신고 사유 (status=false_alarm 일 때만 값, 나머지 null)
+  handled_by?: number | null; // 처리한 사용자 ID
+  handled_at?: string | null; // 처리 완료 시각 ISO 8601 (평균 처리 시간 계산용)
 }
 
 // 백엔드 GET /api/events/stats 응답 필드명과 일치

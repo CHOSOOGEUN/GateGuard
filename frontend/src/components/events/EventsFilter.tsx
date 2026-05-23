@@ -1,44 +1,7 @@
-/**
- * @file components/events/EventsFilter.tsx
- * @description 전체 발생내역 필터 바 컴포넌트
- *
- * ## 기능
- * - 텍스트 검색: EV-번호 / CAM-번호 / 역이름 / 게이트이름 / 인상착의 / 설명 대상 실시간 필터링
- * - 기간 드롭다운: 전체 / 오늘 / 이번 주 / 이번 달
- * - 유형 드롭다운: event_type 또는 description 기반 필터링
- * - 카메라 드롭다운: 로드된 이벤트에서 추출한 CAM-XX 목록
- * - 상태 드롭다운: 미확인(pending) / 처리완료(confirmed) / 오탐(false_alarm)
- * - 역 드롭다운: 로드된 이벤트에서 추출한 역이름 목록
- * - 초기화 버튼: 모든 필터 초기화
- *
- * ## 주의사항
- * - cameraOptions, stationOptions는 EventsPage에서 allEvents 기반으로 추출해서 전달
- * - 유형 필터는 event_type 필드가 없으면 description으로 fallback
- *
- * ## TODO
- * - [ ] 기간 필터 직접 선택(날짜 picker) 기능 추가
- * - [ ] 감지유형 목록 백엔드 스펙 확정 후 수정
- */
-
 import { Search, ChevronDown } from "lucide-react";
-
-export interface EventFilters {
-  search: string;
-  period: "all" | "today" | "week" | "month";
-  type: string;
-  cameraId: string;
-  status: string;
-  station: string;
-}
-
-export const DEFAULT_FILTERS: EventFilters = {
-  search: "",
-  period: "all",
-  type: "",
-  cameraId: "",
-  status: "",
-  station: "",
-};
+import { useState, useEffect, useRef } from "react";
+import { EVENT_TYPE_OPTIONS } from "@/constants/eventTypes";
+import { DEFAULT_FILTERS, type EventFilters } from "./eventFiltersConfig";
 
 interface EventsFilterProps {
   filters: EventFilters;
@@ -52,14 +15,6 @@ const PERIOD_OPTIONS = [
   { value: "today", label: "오늘" },
   { value: "week", label: "이번 주" },
   { value: "month", label: "이번 달" },
-];
-
-const TYPE_OPTIONS = [
-  { value: "", label: "전체 유형" },
-  { value: "태그 없이 통행", label: "태그 없이 통행" },
-  { value: "테일게이팅", label: "테일게이팅" },
-  { value: "비상문 강제 진입", label: "비상문 강제 진입" },
-  { value: "역방향 진입", label: "역방향 진입" },
 ];
 
 const STATUS_OPTIONS = [
@@ -102,6 +57,26 @@ export default function EventsFilter({
   cameraOptions,
   stationOptions,
 }: EventsFilterProps) {
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const filtersRef = useRef(filters);
+  const onChangeRef = useRef(onChange);
+  filtersRef.current = filters;
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const latest = filtersRef.current;
+      if (searchInput !== latest.search) {
+        onChangeRef.current({ ...latest, search: searchInput });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const update = (partial: Partial<EventFilters>) =>
     onChange({ ...filters, ...partial });
 
@@ -122,8 +97,8 @@ export default function EventsFilter({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          value={filters.search}
-          onChange={(e) => update({ search: e.target.value })}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder="EV-번호, 역이름, 게이트, CAM-번호 검색..."
           className="w-full pl-9 pr-4 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4B73F7]"
         />
@@ -140,7 +115,7 @@ export default function EventsFilter({
       <FilterSelect
         value={filters.type}
         onChange={(v) => update({ type: v })}
-        options={TYPE_OPTIONS}
+        options={EVENT_TYPE_OPTIONS}
       />
 
       {/* 카메라 */}

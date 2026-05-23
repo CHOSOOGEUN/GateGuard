@@ -1,16 +1,3 @@
-/**
- * @file components/dashboard/AlertList.tsx
- * @description 대시보드 최신알림 목록 컴포넌트
- *
- * ## 기능
- * - events 배열 렌더링 (데이터 페칭은 DashboardPage에서 담당)
- * - loading 시 스켈레톤 3개 / 빈 배열 시 안내 문구 표시
- *
- * ## 주의사항
- * - 전체보기 버튼은 Link to="/events"로 연결됨
- * - 최대 10건 표시 (DashboardPage에서 limit=10 페칭 + WebSocket .slice(0, 10) 유지)
- */
-
 import { Link } from "react-router-dom";
 import AlertItem from "./AlertItem";
 import type { EventResponse } from "@/types";
