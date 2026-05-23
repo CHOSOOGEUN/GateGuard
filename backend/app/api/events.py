@@ -26,6 +26,7 @@ async def list_events(
     camera_id: Optional[int] = None,
     status: Optional[str] = None,
     type: Optional[str] = None,
+    station: Optional[str] = None,
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
     search: Optional[str] = None,
@@ -64,25 +65,34 @@ async def list_events(
     if date_to:
         query = query.where(Event.timestamp <= date_to)
 
+    # Camera 조인은 station 필터나 search 가 들어올 때만 (중복 join 방지)
+    station_q = station.strip() if station else ""
+    search_q = search.strip() if search else ""
+    if station_q or search_q:
+        query = query.join(Camera, Event.camera_id == Camera.id)
+
+    # 역 이름 명시 필터
+    if station_q:
+        query = query.where(Camera.station_name.ilike(f"%{station_q}%"))
+
     # 서버사이드 통합 검색: EV-번호 / CAM-번호 / 역이름 / 게이트(위치) / event_type / reason
-    if search and search.strip():
-        s = search.strip()
-        pattern = f"%{s}%"
+    if search_q:
+        pattern = f"%{search_q}%"
         conds = [
             Camera.station_name.ilike(pattern),
             Camera.location.ilike(pattern),
             Event.event_type.ilike(pattern),
             Event.reason.ilike(pattern),
         ]
-        m = re.search(r"EV[-_]?(\d+)", s, re.IGNORECASE)
+        m = re.search(r"EV[-_]?(\d+)", search_q, re.IGNORECASE)
         if m:
             conds.append(Event.id == int(m.group(1)))
-        m = re.search(r"CAM[-_]?(\d+)", s, re.IGNORECASE)
+        m = re.search(r"CAM[-_]?(\d+)", search_q, re.IGNORECASE)
         if m:
             conds.append(Event.camera_id == int(m.group(1)))
-        if s.isdigit():
-            conds.append(Event.id == int(s))
-        query = query.join(Camera, Event.camera_id == Camera.id).where(or_(*conds))
+        if search_q.isdigit():
+            conds.append(Event.id == int(search_q))
+        query = query.where(or_(*conds))
 
     query = query.order_by(Event.timestamp.desc()).offset(offset).limit(limit)
 
@@ -145,6 +155,13 @@ async def create_event(
     [GateGuard] AI 실시간 추론 결과로부터 무임승차 이벤트를 기록하고 관제 대시보드에 즉시 브로드캐스트합니다.
     - AI 추론 엔진(inference.py)에서 호출됩니다.
     """
+    # 0. 카메라 검증 — 존재해야 하고 활성 상태여야 이벤트를 받음
+    camera = await db.scalar(select(Camera).where(Camera.id == body.camera_id))
+    if not camera:
+        raise HTTPException(status_code=404, detail=f"카메라 #{body.camera_id} 가 존재하지 않습니다.")
+    if not camera.is_active:
+        raise HTTPException(status_code=400, detail=f"카메라 #{body.camera_id} 가 비활성 상태입니다.")
+
     # 1. DB에 사건 기록 (Persistence)
     # exclude_none: 비전송 필드는 모델 default 가 적용되도록 (event_type → 'unknown')
     event = Event(**body.model_dump(exclude_none=True))
