@@ -43,3 +43,6 @@ Thumbs.db
 # Claude
 .claude
 .claudeignore
+
+# Expo (frontend 는 Vite — .expo 잘못 들어오는 것 방지)
+.expo/
