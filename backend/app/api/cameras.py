@@ -19,7 +19,8 @@ async def list_cameras(
     """
     [통합 v1] 등록된 모든 카메라의 상태를 조회합니다. (보안 인증 필수)
     """
-    result = await db.execute(select(Camera))
+    # 토글/재조회 시 순서 흔들림 방지 — 항상 id 오름차순
+    result = await db.execute(select(Camera).order_by(Camera.id))
     return result.scalars().all()
 
 
